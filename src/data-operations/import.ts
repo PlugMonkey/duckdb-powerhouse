@@ -230,8 +230,20 @@ export async function importDataFromUrl(
 ): Promise<ImportResult> {
   // Ensure connected
   if (!connectionManager.isConnected) {
-    void vscode.window.showWarningMessage('Not connected to a database');
-    return { success: false, error: 'No database connection' };
+    const connect = await vscode.window.showWarningMessage(
+      'Not connected to a database. Create a connection first?',
+      'Create Connection',
+      'Cancel'
+    );
+    if (connect === 'Create Connection') {
+      await vscode.commands.executeCommand('duckdb-powerhouse.createConnection');
+      // Check if now connected
+      if (!connectionManager.isConnected) {
+        return { success: false, error: 'No database connection' };
+      }
+    } else {
+      return { success: false, error: 'No database connection' };
+    }
   }
 
   // Get URL
