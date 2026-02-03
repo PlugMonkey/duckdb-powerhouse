@@ -34,13 +34,6 @@ export async function previewTable(
       columns.map((col): unknown => row[col])
     );
 
-    Logger.debug('Preview data prepared', {
-      table: table.qualifiedName,
-      columnCount: columns.length,
-      rowCount: results.length,
-      timeMs: executionTimeMs.toFixed(2),
-    });
-
     const result: QueryExecutionResult = {
       sql,
       columns,
@@ -52,11 +45,6 @@ export async function previewTable(
     };
 
     // Emit to Results Panel (same as running a query)
-    Logger.info('Firing query result event', {
-      sql: sql.slice(0, 50),
-      rowCount: result.rowCount,
-      columnCount: result.columns.length,
-    });
     queryResultEmitter.fire(result);
 
     if (results.length === 0) {

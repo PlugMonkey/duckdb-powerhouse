@@ -2,7 +2,7 @@
   "name": "duckdb-powerhouse",
   "displayName": "DuckDB Powerhouse by PlugMonkey",
   "description": "Fast in-memory analytics with DuckDB inside VS Code",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "publisher": "PlugMonkey",
   "license": "MIT",
   "icon": "resources/icon.png",
@@ -23,7 +23,7 @@
   },
   "categories": [
     "Data Science",
-    "Other"
+    "Programming Languages"
   ],
   "keywords": [
     "duckdb",

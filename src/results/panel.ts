@@ -32,19 +32,13 @@ export class ResultsPanel {
    * Show a query result in the panel.
    */
   showResult(result: QueryExecutionResult): void {
-    Logger.info('=== showResult START ===', {
-      rowCount: result.rowCount,
-      columnCount: result.columns.length,
-    });
-
     let data: WebviewResultData;
     try {
       data = serializeResult(result);
-      Logger.info('serialized OK', { rows: data.rows.length });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      Logger.error('serializeResult FAILED', { error: message });
-      void vscode.window.showErrorMessage(`Serialize failed: ${message}`);
+      Logger.error('Failed to serialize result', { error: message });
+      void vscode.window.showErrorMessage(`Failed to display results: ${message}`);
       return;
     }
 
@@ -53,22 +47,9 @@ export class ResultsPanel {
       this.results = this.results.slice(0, this.maxResults);
     }
 
-    Logger.info('calling ensurePanel', { currentPanel: !!this.panel });
     this.ensurePanel();
-    Logger.info('ensurePanel done', { panel: !!this.panel });
-
-    Logger.info('calling updateContent');
     this.updateContent();
-    Logger.info('updateContent done');
-
-    Logger.info('revealing panel');
     this.panel?.reveal(vscode.ViewColumn.Two, true);
-    Logger.info('=== showResult END ===');
-
-    // Show single summary message
-    void vscode.window.showInformationMessage(
-      `Results: ${result.rowCount} rows displayed`
-    );
   }
 
   /**
@@ -76,11 +57,9 @@ export class ResultsPanel {
    */
   private ensurePanel(): void {
     if (this.panel) {
-      Logger.info('ensurePanel: panel already exists');
       return;
     }
 
-    Logger.info('ensurePanel: creating new panel');
     this.panel = vscode.window.createWebviewPanel(
       'duckdbResults',
       'DuckDB Results',
@@ -94,7 +73,6 @@ export class ResultsPanel {
         localResourceRoots: [this.extensionUri],
       }
     );
-    Logger.info('ensurePanel: panel created');
 
     this.panel.iconPath = new vscode.ThemeIcon('table');
 
@@ -120,17 +98,10 @@ export class ResultsPanel {
    */
   private updateContent(): void {
     if (!this.panel) {
-      Logger.warn('updateContent called but panel is null');
       return;
     }
 
     const currentResult = this.results[0];
-
-    Logger.debug('Updating webview content', {
-      hasResult: !!currentResult,
-      rowCount: currentResult?.rowCount,
-      columnCount: currentResult?.columns.length,
-    });
 
     // Build history items for dropdown
     const historyItems = this.results.map(r => ({
@@ -143,7 +114,6 @@ export class ResultsPanel {
 
     let html: string;
     try {
-      Logger.info('Calling getWebviewContent');
       html = getWebviewContent(
         this.panel.webview,
         this.extensionUri,
@@ -151,16 +121,12 @@ export class ResultsPanel {
         historyItems,
         { showRowNumbers: config.showRowNumbers }
       );
-      Logger.info('getWebviewContent returned', { htmlLength: html.length });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const stack = err instanceof Error ? err.stack : '';
-      Logger.error('getWebviewContent FAILED', { error: message, stack });
-      void vscode.window.showErrorMessage(`Failed to generate HTML: ${message}`);
+      Logger.error('Failed to generate results HTML', { error: message });
+      void vscode.window.showErrorMessage(`Failed to display results: ${message}`);
       return;
     }
-
-    Logger.info('Setting webview HTML', { htmlLength: html.length });
 
     this.panel.webview.html = html;
 

@@ -91,11 +91,6 @@ export function activate(context: vscode.ExtensionContext): void {
   // Subscribe to query results and show in panel
   context.subscriptions.push(
     onQueryResult((result) => {
-      Logger.info('Query result received in extension', {
-        rowCount: result.rowCount,
-        columnCount: result.columns.length,
-        hasError: !!result.error,
-      });
       resultsPanel.showResult(result);
       // Update context keys in case query changed schema (CREATE/DROP TABLE)
       if (!result.error) {

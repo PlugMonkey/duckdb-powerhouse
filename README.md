@@ -1,4 +1,4 @@
-# DuckDB Powerhouse by PlugMonkey
+# DuckDB Powerhouse
 
 Fast in-memory analytics with DuckDB inside VS Code.
 
@@ -14,9 +14,9 @@ Fast in-memory analytics with DuckDB inside VS Code.
 
 ### Data Explorer
 - Sidebar tree view of database structure
-- Browse schemas, tables, and columns
+- Browse schemas, tables, and columns with types
 - Table row count display
-- Context menus for quick actions
+- Context menus for quick actions on tables, columns, schemas
 
 ### Query Execution
 - Run queries with keyboard shortcuts
@@ -34,29 +34,58 @@ Fast in-memory analytics with DuckDB inside VS Code.
 - Copy cells, rows, or entire results
 - Keyboard navigation support
 
-### File Querying
-- Query Parquet, CSV, JSON files directly without importing
+### File Querying (No Import Needed!)
+- Query Parquet, CSV, JSON files directly
 - Custom delimiter and encoding options for CSV
-- Import files to database tables
+- Import files to database tables when needed
 - File size warnings for large files (>100MB)
 - Drag & drop files into SQL editor
 
+### Data Operations
+- **Create Table Wizard**: Multiple paths to create tables
+  - Import from local file
+  - Import from URL
+  - Create empty table with column definitions
+  - Create from SQL query (CTAS)
+- **Import Data**: File picker or URL import
+- **Export Data**: Export tables or query results to CSV, Parquet, or JSON
+
 ### Table Operations
-- Preview table data
+- Preview table data in Results Panel
+- Show table info (rows, columns, size)
 - Copy SELECT/CREATE TABLE statements
-- Drop and truncate tables (with confirmation)
-- Refresh individual tables
+- Copy as CSV or JSON
+- Export to file
+- Rename, truncate, drop tables
+
+### Column Operations
+- Filter by column (generates WHERE clause query)
+- Sort by column (generates ORDER BY query)
+- Insert column name at cursor
+- Copy column name
+
+### SQL Snippets
+Type these prefixes and press Tab:
+- `ct` - CREATE TABLE
+- `ctas` - CREATE TABLE AS SELECT
+- `csv` - SELECT FROM read_csv()
+- `parquet` - SELECT FROM read_parquet()
+- `json` - SELECT FROM read_json()
+- `pivot` - DuckDB PIVOT syntax
+- `summarize` - DuckDB SUMMARIZE
+- And 15+ more...
 
 ## Getting Started
 
 1. Open the DuckDB Powerhouse sidebar (database icon in activity bar)
-2. Click the **+** button to create a connection:
+2. Click **Create Connection** or the **+** button
+3. Choose your connection type:
    - **Create In-Memory Database** - Fast, temporary (data lost on close)
    - **Open Existing Database** - Open an existing `.duckdb` file
    - **Create New Database** - Create a new `.duckdb` file
-3. Write SQL in any `.sql` file
-4. Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run queries
-5. View results in the Results Panel
+4. Write SQL in any `.sql` file
+5. Press `Cmd+Enter` (Mac) or `Ctrl+Enter` (Windows/Linux) to run
+6. View results in the Results Panel
 
 ## Supported File Types
 
@@ -70,26 +99,12 @@ Right-click any supported file in the Explorer to preview, describe schema, or i
 
 ## Keyboard Shortcuts
 
-| Command | Windows/Linux | Mac | Description |
-|---------|---------------|-----|-------------|
-| Run Query | `Ctrl+Enter` | `Cmd+Enter` | Execute query at cursor |
-| Run Selected | `Ctrl+Shift+Enter` | `Cmd+Shift+Enter` | Execute selected text |
-| Explain Query | `Ctrl+Shift+E` | `Cmd+Shift+E` | Show execution plan |
-
-## Commands
-
-All commands are available via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
-
-| Command | Description |
-|---------|-------------|
-| DuckDB: Create Connection | Open connection menu |
-| DuckDB: Disconnect | Close current connection |
-| DuckDB: Reconnect | Reconnect to last database |
-| DuckDB: Run Query | Execute current query |
-| DuckDB: Run Selected Query | Execute selected text |
-| DuckDB: Explain Query | Show query plan |
-| DuckDB: Cancel Running Query | Cancel active query |
-| DuckDB: Clear Results | Clear the results panel |
+| Command | Windows/Linux | Mac |
+|---------|---------------|-----|
+| Run Query | `Ctrl+Enter` | `Cmd+Enter` |
+| Run Selected | `Ctrl+Shift+Enter` | `Cmd+Shift+Enter` |
+| Explain Query | `Ctrl+Shift+E` | `Cmd+Shift+E` |
+| New SQL File | `Ctrl+Alt+N` | `Cmd+Alt+N` |
 
 ## Settings
 
@@ -97,34 +112,37 @@ Configure via VS Code Settings (`Ctrl+,` / `Cmd+,`):
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `duckdb-powerhouse.maxResultRows` | 10000 | Maximum rows to fetch per query |
-| `duckdb-powerhouse.defaultResultLimit` | 100 | Default LIMIT for table previews |
-| `duckdb-powerhouse.autoConnect` | false | Auto-create in-memory connection on startup |
-| `duckdb-powerhouse.showRowNumbers` | true | Show row numbers in results panel |
-| `duckdb-powerhouse.confirmLargeResults` | true | Confirm before fetching large result sets |
-| `duckdb-powerhouse.queryTimeout` | 0 | Query timeout in seconds (0 = no timeout) |
+| `maxResultRows` | 10,000 | Maximum rows to fetch per query |
+| `defaultResultLimit` | 100 | Default LIMIT for table previews |
+| `autoConnect` | false | Auto-create in-memory connection on startup |
+| `showRowNumbers` | true | Show row numbers in results panel |
+| `confirmLargeResults` | true | Confirm before fetching large result sets |
+| `queryTimeout` | 0 | Query timeout in seconds (0 = no timeout) |
 
 ## Context Menus
 
 ### Table Context Menu
 - Preview Data
 - New Query
-- Copy SELECT Statement
-- Copy Table Name
-- Copy CREATE TABLE Statement
-- Refresh Table
-- Truncate Table
-- Drop Table
+- Show Table Info
+- Copy SELECT/CREATE TABLE/Table Name
+- Copy as CSV/JSON
+- Export Table
+- Rename/Truncate/Drop Table
 
-### Schema Context Menu
-- Refresh Schema
-- Copy Schema Name
+### Column Context Menu
+- Filter by This Column
+- Sort by This Column
+- Insert Column Name
+- Copy Column Name
 
-### Database Context Menu
-- Show Database Properties
-- Disconnect
+### Schema/Database Context Menu
+- Create Table
+- Import Data
+- Show Properties
+- Refresh
 
-### File Context Menu (for supported file types)
+### File Context Menu
 - Preview Data
 - Preview with Options (CSV only)
 - Describe Schema
@@ -136,10 +154,12 @@ Configure via VS Code Settings (`Ctrl+,` / `Cmd+,`):
 
 - VS Code 1.85.0 or higher
 
-## About PlugMonkey
+## About
+
+Built with DuckDB - the fast in-process analytical database.
 
 [PlugMonkey](https://plugmonkey.xyz/) builds developer tools and VS Code extensions to supercharge your workflow.
 
 ## License
 
-MIT - Built with ❤️ by [PlugMonkey](https://plugmonkey.xyz/)
+MIT - Built by [PlugMonkey](https://plugmonkey.xyz/)
