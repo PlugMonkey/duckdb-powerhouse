@@ -1,0 +1,602 @@
+{
+  "name": "duckdb-powerhouse",
+  "displayName": "DuckDB Powerhouse by PlugMonkey",
+  "description": "Fast in-memory analytics with DuckDB inside VS Code",
+  "version": "0.1.0",
+  "publisher": "PlugMonkey",
+  "license": "MIT",
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#FDB813",
+    "theme": "light"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PlugMonkey/duckdb-powerhouse"
+  },
+  "bugs": {
+    "url": "https://github.com/PlugMonkey/duckdb-powerhouse/issues"
+  },
+  "homepage": "https://plugmonkey.xyz/product/duckdb-powerhouse/",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Data Science",
+    "Other"
+  ],
+  "keywords": [
+    "duckdb",
+    "sql",
+    "analytics",
+    "parquet",
+    "csv",
+    "database"
+  ],
+  "activationEvents": [
+    "onLanguage:sql",
+    "workspaceContains:**/*.duckdb",
+    "workspaceContains:**/*.parquet"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "duckdb-powerhouse.createConnection",
+        "title": "Create Connection",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.disconnect",
+        "title": "Disconnect",
+        "category": "DuckDB",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "duckdb-powerhouse.reconnect",
+        "title": "Reconnect to Last Connection",
+        "category": "DuckDB",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "duckdb-powerhouse.runQuery",
+        "title": "Run Query",
+        "category": "DuckDB",
+        "icon": "$(play)"
+      },
+      {
+        "command": "duckdb-powerhouse.runSelectedQuery",
+        "title": "Run Selected Query",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.explainQuery",
+        "title": "Explain Query",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.refreshExplorer",
+        "title": "Refresh",
+        "category": "DuckDB",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "duckdb-powerhouse.previewTable",
+        "title": "Preview Data",
+        "category": "DuckDB",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "duckdb-powerhouse.copyTableName",
+        "title": "Copy Table Name",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.copySelectStatement",
+        "title": "Copy SELECT Statement",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.newQueryForTable",
+        "title": "New Query",
+        "category": "DuckDB",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "duckdb-powerhouse.copyColumnName",
+        "title": "Copy Column Name",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.previewFile",
+        "title": "Preview Data",
+        "category": "DuckDB",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "duckdb-powerhouse.describeFile",
+        "title": "Describe Schema",
+        "category": "DuckDB",
+        "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "duckdb-powerhouse.newQueryForFile",
+        "title": "New Query",
+        "category": "DuckDB",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "duckdb-powerhouse.copyFileQuery",
+        "title": "Copy SELECT Query",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.cancelQuery",
+        "title": "Cancel Running Query",
+        "category": "DuckDB",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "duckdb-powerhouse.refreshSchema",
+        "title": "Refresh Schema",
+        "category": "DuckDB",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "duckdb-powerhouse.copySchemaName",
+        "title": "Copy Schema Name",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.dropTable",
+        "title": "Drop Table...",
+        "category": "DuckDB",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "duckdb-powerhouse.truncateTable",
+        "title": "Truncate Table...",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.refreshTable",
+        "title": "Refresh Table",
+        "category": "DuckDB",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "duckdb-powerhouse.copyCreateTable",
+        "title": "Copy CREATE TABLE Statement",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.databaseProperties",
+        "title": "Show Database Properties",
+        "category": "DuckDB",
+        "icon": "$(info)"
+      },
+      {
+        "command": "duckdb-powerhouse.clearResults",
+        "title": "Clear Results",
+        "category": "DuckDB",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "duckdb-powerhouse.exportTsv",
+        "title": "Export as TSV",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.previewFileWithOptions",
+        "title": "Preview with Options...",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.importFileToTable",
+        "title": "Import to Table...",
+        "category": "DuckDB",
+        "icon": "$(table)"
+      },
+      {
+        "command": "duckdb-powerhouse.newSqlFile",
+        "title": "New SQL File",
+        "category": "DuckDB",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "duckdb-powerhouse.openWalkthrough",
+        "title": "Getting Started Guide",
+        "category": "DuckDB",
+        "icon": "$(book)"
+      },
+      {
+        "command": "duckdb-powerhouse.createTableWizard",
+        "title": "Create Table...",
+        "category": "DuckDB",
+        "icon": "$(add)"
+      },
+      {
+        "command": "duckdb-powerhouse.importData",
+        "title": "Import Data...",
+        "category": "DuckDB",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "duckdb-powerhouse.importDataFromUrl",
+        "title": "Import from URL...",
+        "category": "DuckDB",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "duckdb-powerhouse.exportTable",
+        "title": "Export Table...",
+        "category": "DuckDB",
+        "icon": "$(export)"
+      },
+      {
+        "command": "duckdb-powerhouse.exportResults",
+        "title": "Export Results to File...",
+        "category": "DuckDB",
+        "icon": "$(export)"
+      },
+      {
+        "command": "duckdb-powerhouse.copyTableAsCsv",
+        "title": "Copy as CSV",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.copyTableAsJson",
+        "title": "Copy as JSON",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.insertColumnName",
+        "title": "Insert Column Name",
+        "category": "DuckDB"
+      },
+      {
+        "command": "duckdb-powerhouse.filterByColumn",
+        "title": "Filter by This Column...",
+        "category": "DuckDB",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "duckdb-powerhouse.sortByColumn",
+        "title": "Sort by This Column...",
+        "category": "DuckDB",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "duckdb-powerhouse.showTableInfo",
+        "title": "Show Table Info",
+        "category": "DuckDB",
+        "icon": "$(info)"
+      },
+      {
+        "command": "duckdb-powerhouse.renameTable",
+        "title": "Rename Table...",
+        "category": "DuckDB",
+        "icon": "$(edit)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "duckdb-powerhouse",
+          "title": "DuckDB Powerhouse",
+          "icon": "$(database)"
+        }
+      ]
+    },
+    "views": {
+      "duckdb-powerhouse": [
+        {
+          "id": "duckdbExplorer",
+          "name": "Explorer",
+          "icon": "$(database)",
+          "contextualTitle": "DuckDB Explorer"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "duckdb-powerhouse.createConnection",
+          "when": "view == duckdbExplorer",
+          "group": "navigation@1"
+        },
+        {
+          "command": "duckdb-powerhouse.createTableWizard",
+          "when": "view == duckdbExplorer && duckdb-powerhouse.connected",
+          "group": "navigation@2"
+        },
+        {
+          "command": "duckdb-powerhouse.refreshExplorer",
+          "when": "view == duckdbExplorer",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "duckdb-powerhouse.previewTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "1_query@1"
+        },
+        {
+          "command": "duckdb-powerhouse.newQueryForTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "1_query@2"
+        },
+        {
+          "command": "duckdb-powerhouse.copySelectStatement",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "duckdb-powerhouse.copyTableName",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_copy@2"
+        },
+        {
+          "command": "duckdb-powerhouse.copyCreateTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_copy@3"
+        },
+        {
+          "command": "duckdb-powerhouse.copyTableAsCsv",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_copy@4"
+        },
+        {
+          "command": "duckdb-powerhouse.copyTableAsJson",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_copy@5"
+        },
+        {
+          "command": "duckdb-powerhouse.exportTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "3_export@1"
+        },
+        {
+          "command": "duckdb-powerhouse.showTableInfo",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "4_actions@1"
+        },
+        {
+          "command": "duckdb-powerhouse.refreshTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "4_actions@2"
+        },
+        {
+          "command": "duckdb-powerhouse.renameTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "5_ddl@1"
+        },
+        {
+          "command": "duckdb-powerhouse.truncateTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "5_ddl@2"
+        },
+        {
+          "command": "duckdb-powerhouse.dropTable",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "5_ddl@3"
+        },
+        {
+          "command": "duckdb-powerhouse.filterByColumn",
+          "when": "view == duckdbExplorer && viewItem == column",
+          "group": "1_query@1"
+        },
+        {
+          "command": "duckdb-powerhouse.sortByColumn",
+          "when": "view == duckdbExplorer && viewItem == column",
+          "group": "1_query@2"
+        },
+        {
+          "command": "duckdb-powerhouse.insertColumnName",
+          "when": "view == duckdbExplorer && viewItem == column",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "duckdb-powerhouse.copyColumnName",
+          "when": "view == duckdbExplorer && viewItem == column",
+          "group": "2_copy@2"
+        },
+        {
+          "command": "duckdb-powerhouse.createTableWizard",
+          "when": "view == duckdbExplorer && viewItem == schema",
+          "group": "0_create@1"
+        },
+        {
+          "command": "duckdb-powerhouse.importData",
+          "when": "view == duckdbExplorer && viewItem == schema",
+          "group": "0_create@2"
+        },
+        {
+          "command": "duckdb-powerhouse.refreshSchema",
+          "when": "view == duckdbExplorer && viewItem == schema",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "duckdb-powerhouse.copySchemaName",
+          "when": "view == duckdbExplorer && viewItem == schema",
+          "group": "2_copy@1"
+        },
+        {
+          "command": "duckdb-powerhouse.createTableWizard",
+          "when": "view == duckdbExplorer && viewItem == database",
+          "group": "0_create@1"
+        },
+        {
+          "command": "duckdb-powerhouse.importData",
+          "when": "view == duckdbExplorer && viewItem == database",
+          "group": "0_create@2"
+        },
+        {
+          "command": "duckdb-powerhouse.databaseProperties",
+          "when": "view == duckdbExplorer && viewItem == database",
+          "group": "1_info@1"
+        },
+        {
+          "command": "duckdb-powerhouse.disconnect",
+          "when": "view == duckdbExplorer && viewItem == database",
+          "group": "2_actions@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "duckdb-powerhouse.previewFile",
+          "when": "resourceExtname =~ /\\.(parquet|csv|tsv|json|jsonl|ndjson)$/i",
+          "group": "duckdb@1"
+        },
+        {
+          "command": "duckdb-powerhouse.previewFileWithOptions",
+          "when": "resourceExtname =~ /\\.(csv|tsv)$/i",
+          "group": "duckdb@2"
+        },
+        {
+          "command": "duckdb-powerhouse.describeFile",
+          "when": "resourceExtname =~ /\\.(parquet|csv|tsv|json|jsonl|ndjson)$/i",
+          "group": "duckdb@3"
+        },
+        {
+          "command": "duckdb-powerhouse.importFileToTable",
+          "when": "resourceExtname =~ /\\.(parquet|csv|tsv|json|jsonl|ndjson)$/i",
+          "group": "duckdb@4"
+        },
+        {
+          "command": "duckdb-powerhouse.newQueryForFile",
+          "when": "resourceExtname =~ /\\.(parquet|csv|tsv|json|jsonl|ndjson)$/i",
+          "group": "duckdb@5"
+        },
+        {
+          "command": "duckdb-powerhouse.copyFileQuery",
+          "when": "resourceExtname =~ /\\.(parquet|csv|tsv|json|jsonl|ndjson)$/i",
+          "group": "duckdb@6"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DuckDB Powerhouse",
+      "properties": {
+        "duckdb-powerhouse.maxResultRows": {
+          "type": "number",
+          "default": 1e4,
+          "minimum": 100,
+          "maximum": 1e6,
+          "description": "Maximum number of rows to fetch and display in the results panel. Larger values use more memory."
+        },
+        "duckdb-powerhouse.duckdbPath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to DuckDB binary. Leave empty to use the bundled version from duckdb-async."
+        },
+        "duckdb-powerhouse.defaultResultLimit": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1e4,
+          "description": "Default LIMIT applied to table preview queries. Use a smaller value for faster previews."
+        },
+        "duckdb-powerhouse.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically create an in-memory database connection when the extension activates."
+        },
+        "duckdb-powerhouse.showRowNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show row numbers in the results panel."
+        },
+        "duckdb-powerhouse.confirmLargeResults": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a confirmation dialog before fetching results that exceed the default limit."
+        },
+        "duckdb-powerhouse.queryTimeout": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 3600,
+          "description": "Query execution timeout in seconds. Set to 0 for no timeout."
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "duckdb-powerhouse.runQuery",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == sql"
+      },
+      {
+        "command": "duckdb-powerhouse.runSelectedQuery",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus && editorLangId == sql && editorHasSelection"
+      },
+      {
+        "command": "duckdb-powerhouse.explainQuery",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorTextFocus && editorLangId == sql"
+      },
+      {
+        "command": "duckdb-powerhouse.newSqlFile",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "duckdbExplorer",
+        "contents": "Welcome to DuckDB Powerhouse!\n\n[$(database) Create Connection](command:duckdb-powerhouse.createConnection)\n\nQuery Parquet, CSV, and JSON files directly - no import needed.\n\n[$(book) Getting Started Guide](command:duckdb-powerhouse.openWalkthrough)",
+        "when": "!duckdb-powerhouse.connected"
+      },
+      {
+        "view": "duckdbExplorer",
+        "contents": "Database is empty. Get started:\n\n[$(folder-opened) Import Data](command:duckdb-powerhouse.importData)\n[$(add) Create Table](command:duckdb-powerhouse.createTableWizard)\n[$(globe) Import from URL](command:duckdb-powerhouse.importDataFromUrl)\n\nOr query files directly without importing:\n`SELECT * FROM 'file.csv'`",
+        "when": "duckdb-powerhouse.connected && duckdb-powerhouse.emptyDatabase"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sql",
+        "path": "./snippets/sql.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "bun run esbuild.js",
+    "watch": "bun run esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "check": "bun run typecheck && bun run lint",
+    "package": "bun run build && bunx vsce package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.19.10",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "mocha": "^10.2.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  },
+  "dependencies": {
+    "duckdb-async": "^1.0.0"
+  }
+}

@@ -1,0 +1,40 @@
+# Source files (bundled into out/)
+src/**
+**/*.ts
+!out/**
+
+# Development files
+.vscode/**
+.claude/**
+.git/**
+.gitignore
+*.md
+!README.md
+!CHANGELOG.md
+
+# Build configuration
+tsconfig.json
+esbuild.js
+vitest.config.ts
+.eslintrc*
+.eslintignore
+.prettierrc*
+
+# Dependencies (most are bundled, but keep native modules)
+node_modules/**
+!node_modules/duckdb-async/**
+!node_modules/duckdb/**
+bun.lock
+package-lock.json
+
+# Test files
+**/*.test.ts
+**/test/**
+**/__tests__/**
+
+# Development artifacts
+tasks/**
+
+# Other
+.DS_Store
+*.vsix

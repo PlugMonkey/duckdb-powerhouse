@@ -1,0 +1,185 @@
+{
+  "Create Table": {
+    "prefix": ["ct", "create table"],
+    "body": [
+      "CREATE TABLE ${1:table_name} (",
+      "\t${2:id} ${3:INTEGER PRIMARY KEY},",
+      "\t${4:column_name} ${5:VARCHAR}",
+      ");$0"
+    ],
+    "description": "Create a new table with columns"
+  },
+  "Create Table As Select": {
+    "prefix": ["ctas", "create table as"],
+    "body": [
+      "CREATE TABLE ${1:table_name} AS",
+      "SELECT ${2:*}",
+      "FROM ${3:source};$0"
+    ],
+    "description": "Create table from a SELECT query"
+  },
+  "Insert Into": {
+    "prefix": ["ins", "insert"],
+    "body": [
+      "INSERT INTO ${1:table_name} (${2:columns})",
+      "VALUES (${3:values});$0"
+    ],
+    "description": "Insert rows into a table"
+  },
+  "Select From Parquet": {
+    "prefix": ["parquet", "read parquet"],
+    "body": [
+      "SELECT ${1:*}",
+      "FROM read_parquet('${2:path/to/file.parquet}')",
+      "LIMIT ${3:100};$0"
+    ],
+    "description": "Query a Parquet file directly"
+  },
+  "Select From CSV": {
+    "prefix": ["csv", "read csv"],
+    "body": [
+      "SELECT ${1:*}",
+      "FROM read_csv('${2:path/to/file.csv}')",
+      "LIMIT ${3:100};$0"
+    ],
+    "description": "Query a CSV file directly"
+  },
+  "Select From CSV with Options": {
+    "prefix": ["csvopt", "read csv options"],
+    "body": [
+      "SELECT ${1:*}",
+      "FROM read_csv('${2:path/to/file.csv}',",
+      "\theader = ${3:true},",
+      "\tdelim = '${4:,}',",
+      "\tquote = '${5:\"}'",
+      ")",
+      "LIMIT ${6:100};$0"
+    ],
+    "description": "Query a CSV file with options"
+  },
+  "Select From JSON": {
+    "prefix": ["json", "read json"],
+    "body": [
+      "SELECT ${1:*}",
+      "FROM read_json('${2:path/to/file.json}')",
+      "LIMIT ${3:100};$0"
+    ],
+    "description": "Query a JSON file directly"
+  },
+  "Common Table Expression": {
+    "prefix": ["cte", "with"],
+    "body": [
+      "WITH ${1:cte_name} AS (",
+      "\tSELECT ${2:*}",
+      "\tFROM ${3:table_name}",
+      ")",
+      "SELECT ${4:*}",
+      "FROM ${1:cte_name};$0"
+    ],
+    "description": "Common Table Expression (CTE)"
+  },
+  "DuckDB Pivot": {
+    "prefix": ["pivot"],
+    "body": [
+      "PIVOT ${1:table_name}",
+      "ON ${2:column_to_pivot}",
+      "USING ${3:SUM}(${4:value_column});$0"
+    ],
+    "description": "DuckDB PIVOT syntax"
+  },
+  "DuckDB Unpivot": {
+    "prefix": ["unpivot"],
+    "body": [
+      "UNPIVOT ${1:table_name}",
+      "ON ${2:columns_to_unpivot}",
+      "INTO",
+      "\tNAME ${3:name_column}",
+      "\tVALUE ${4:value_column};$0"
+    ],
+    "description": "DuckDB UNPIVOT syntax"
+  },
+  "Copy to CSV": {
+    "prefix": ["copy csv", "export csv"],
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:output.csv}'",
+      "(HEADER, DELIMITER ',');$0"
+    ],
+    "description": "Export data to CSV file"
+  },
+  "Copy to Parquet": {
+    "prefix": ["copy parquet", "export parquet"],
+    "body": [
+      "COPY ${1:table_name}",
+      "TO '${2:output.parquet}'",
+      "(FORMAT PARQUET);$0"
+    ],
+    "description": "Export data to Parquet file"
+  },
+  "DuckDB Summarize": {
+    "prefix": ["summarize", "stats"],
+    "body": ["SUMMARIZE ${1:table_name};$0"],
+    "description": "Get statistical summary of a table"
+  },
+  "Describe Table": {
+    "prefix": ["describe", "desc"],
+    "body": ["DESCRIBE ${1:table_name};$0"],
+    "description": "Describe table structure"
+  },
+  "Select with Window Function": {
+    "prefix": ["window", "over"],
+    "body": [
+      "SELECT",
+      "\t${1:column},",
+      "\t${2:ROW_NUMBER}() OVER (",
+      "\t\tPARTITION BY ${3:partition_column}",
+      "\t\tORDER BY ${4:order_column}",
+      "\t) AS ${5:row_num}",
+      "FROM ${6:table_name};$0"
+    ],
+    "description": "SELECT with window function"
+  },
+  "Group By with Aggregates": {
+    "prefix": ["groupby", "group"],
+    "body": [
+      "SELECT",
+      "\t${1:group_column},",
+      "\tCOUNT(*) AS count,",
+      "\tSUM(${2:value_column}) AS total",
+      "FROM ${3:table_name}",
+      "GROUP BY ${1:group_column}",
+      "ORDER BY count DESC;$0"
+    ],
+    "description": "GROUP BY with common aggregates"
+  },
+  "Create View": {
+    "prefix": ["cv", "create view"],
+    "body": [
+      "CREATE VIEW ${1:view_name} AS",
+      "SELECT ${2:*}",
+      "FROM ${3:table_name};$0"
+    ],
+    "description": "Create a view"
+  },
+  "Import CSV to Table": {
+    "prefix": ["import csv"],
+    "body": [
+      "CREATE TABLE ${1:table_name} AS",
+      "SELECT * FROM read_csv('${2:path/to/file.csv}');$0"
+    ],
+    "description": "Import CSV file into a new table"
+  },
+  "Import Parquet to Table": {
+    "prefix": ["import parquet"],
+    "body": [
+      "CREATE TABLE ${1:table_name} AS",
+      "SELECT * FROM read_parquet('${2:path/to/file.parquet}');$0"
+    ],
+    "description": "Import Parquet file into a new table"
+  },
+  "Show Tables": {
+    "prefix": ["show tables", "tables"],
+    "body": ["SHOW TABLES;$0"],
+    "description": "List all tables in the database"
+  }
+}
