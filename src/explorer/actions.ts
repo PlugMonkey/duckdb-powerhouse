@@ -318,6 +318,22 @@ export async function insertColumnName(column: ColumnNode): Promise<void> {
   });
 }
 
+/** Filter operators for column filtering */
+const FILTER_OPERATORS = [
+  { label: '= (equals)', value: '=', needsValue: true },
+  { label: '!= (not equals)', value: '!=', needsValue: true },
+  { label: '> (greater than)', value: '>', needsValue: true },
+  { label: '>= (greater or equal)', value: '>=', needsValue: true },
+  { label: '< (less than)', value: '<', needsValue: true },
+  { label: '<= (less or equal)', value: '<=', needsValue: true },
+  { label: 'LIKE (pattern match)', value: 'LIKE', needsValue: true },
+  { label: 'NOT LIKE', value: 'NOT LIKE', needsValue: true },
+  { label: 'IS NULL', value: 'IS NULL', needsValue: false },
+  { label: 'IS NOT NULL', value: 'IS NOT NULL', needsValue: false },
+  { label: 'IN (list)', value: 'IN', needsValue: true },
+  { label: 'BETWEEN', value: 'BETWEEN', needsValue: true },
+];
+
 /**
  * Generate a filter query for the column.
  */
@@ -325,13 +341,13 @@ export async function filterByColumn(
   column: ColumnNode,
   connectionManager: ConnectionManager
 ): Promise<void> {
-  // Prompt for filter value
-  const value = await vscode.window.showInputBox({
-    prompt: `Filter ${column.tableName} where ${column.name} equals:`,
-    placeHolder: 'Enter value to filter by',
+  // First, select the operator
+  const operatorChoice = await vscode.window.showQuickPick(FILTER_OPERATORS, {
+    placeHolder: `Select filter operator for "${column.name}"`,
+    title: 'Filter Operator',
   });
 
-  if (value === undefined) return;
+  if (!operatorChoice) return;
 
   const qualifiedTable = column.schemaName === 'main'
     ? `"${column.tableName}"`
@@ -342,12 +358,66 @@ export async function filterByColumn(
     column.dataType.toUpperCase().includes('TEXT') ||
     column.dataType.toUpperCase().includes('CHAR');
 
-  const filterValue = isStringType ? `'${value.replace(/'/g, "''")}'` : value;
+  let whereClause: string;
+
+  if (!operatorChoice.needsValue) {
+    // IS NULL / IS NOT NULL - no value needed
+    whereClause = `"${column.name}" ${operatorChoice.value}`;
+  } else if (operatorChoice.value === 'IN') {
+    // IN operator - prompt for comma-separated values
+    const values = await vscode.window.showInputBox({
+      prompt: `Enter comma-separated values for IN clause`,
+      placeHolder: isStringType ? "value1, value2, value3" : "1, 2, 3",
+    });
+    if (values === undefined) return;
+
+    const valueList = values.split(',').map(v => {
+      const trimmed = v.trim();
+      return isStringType ? `'${trimmed.replace(/'/g, "''")}'` : trimmed;
+    }).join(', ');
+    whereClause = `"${column.name}" IN (${valueList})`;
+  } else if (operatorChoice.value === 'BETWEEN') {
+    // BETWEEN operator - prompt for two values
+    const startValue = await vscode.window.showInputBox({
+      prompt: `Enter start value for BETWEEN`,
+      placeHolder: isStringType ? "start value" : "0",
+    });
+    if (startValue === undefined) return;
+
+    const endValue = await vscode.window.showInputBox({
+      prompt: `Enter end value for BETWEEN`,
+      placeHolder: isStringType ? "end value" : "100",
+    });
+    if (endValue === undefined) return;
+
+    const formattedStart = isStringType ? `'${startValue.replace(/'/g, "''")}'` : startValue;
+    const formattedEnd = isStringType ? `'${endValue.replace(/'/g, "''")}'` : endValue;
+    whereClause = `"${column.name}" BETWEEN ${formattedStart} AND ${formattedEnd}`;
+  } else if (operatorChoice.value === 'LIKE' || operatorChoice.value === 'NOT LIKE') {
+    // LIKE operator - show pattern hint
+    const pattern = await vscode.window.showInputBox({
+      prompt: `Enter pattern (use % for wildcard, _ for single char)`,
+      placeHolder: '%search%',
+    });
+    if (pattern === undefined) return;
+
+    whereClause = `"${column.name}" ${operatorChoice.value} '${pattern.replace(/'/g, "''")}'`;
+  } else {
+    // Standard operators (=, !=, >, <, >=, <=)
+    const value = await vscode.window.showInputBox({
+      prompt: `Filter ${column.tableName} where ${column.name} ${operatorChoice.value}:`,
+      placeHolder: 'Enter value',
+    });
+    if (value === undefined) return;
+
+    const filterValue = isStringType ? `'${value.replace(/'/g, "''")}'` : value;
+    whereClause = `"${column.name}" ${operatorChoice.value} ${filterValue}`;
+  }
 
   const sql = `-- Filter ${column.tableName} by ${column.name}
 SELECT *
 FROM ${qualifiedTable}
-WHERE "${column.name}" = ${filterValue}
+WHERE ${whereClause}
 LIMIT 100;
 `;
 
@@ -523,5 +593,81 @@ export async function renameTable(
     const error = err instanceof Error ? err.message : String(err);
     Logger.error('Failed to rename table', { table: table.qualifiedName, error });
     void vscode.window.showErrorMessage(`Failed to rename table: ${error}`);
+  }
+}
+
+/**
+ * Generate an INSERT template for a table with all column names.
+ */
+export async function generateInsertTemplate(
+  table: TableNode,
+  connectionManager: ConnectionManager
+): Promise<void> {
+  if (!connectionManager.isConnected) {
+    void vscode.window.showWarningMessage('Not connected to a database');
+    return;
+  }
+
+  try {
+    // Get column details
+    const columns = await connectionManager.execute(`
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = '${table.schemaName}' AND table_name = '${table.name}'
+      ORDER BY ordinal_position
+    `);
+
+    if (columns.length === 0) {
+      void vscode.window.showWarningMessage('Table has no columns');
+      return;
+    }
+
+    const columnNames = columns.map(c => `"${c.column_name}"`).join(',\n    ');
+    const valuePlaceholders = columns.map(c => {
+      const type = (c.data_type as string).toUpperCase();
+      const nullable = c.is_nullable === 'YES' ? ' -- nullable' : '';
+      if (type.includes('VARCHAR') || type.includes('TEXT') || type.includes('CHAR')) {
+        return `'value'${nullable}`;
+      } else if (type.includes('INT') || type.includes('DECIMAL') || type.includes('DOUBLE') || type.includes('FLOAT')) {
+        return `0${nullable}`;
+      } else if (type.includes('BOOL')) {
+        return `true${nullable}`;
+      } else if (type.includes('DATE')) {
+        return `'2024-01-01'${nullable}`;
+      } else if (type.includes('TIME')) {
+        return `'2024-01-01 00:00:00'${nullable}`;
+      } else if (type === 'UUID') {
+        return `'00000000-0000-0000-0000-000000000000'${nullable}`;
+      } else {
+        return `NULL${nullable}`;
+      }
+    }).join(',\n    ');
+
+    const sql = `-- Insert into ${table.qualifiedName}
+-- Columns: ${columns.map(c => `${c.column_name} (${c.data_type})`).join(', ')}
+
+INSERT INTO ${table.qualifiedName} (
+    ${columnNames}
+)
+VALUES (
+    ${valuePlaceholders}
+);
+
+-- Insert multiple rows:
+-- INSERT INTO ${table.qualifiedName} (${columns.map(c => `"${c.column_name}"`).join(', ')})
+-- VALUES
+--     (value1, value2, ...),
+--     (value1, value2, ...);
+`;
+
+    const doc = await vscode.workspace.openTextDocument({
+      language: 'sql',
+      content: sql,
+    });
+    await vscode.window.showTextDocument(doc);
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    Logger.error('Failed to generate INSERT template', { table: table.qualifiedName, error });
+    void vscode.window.showErrorMessage(`Failed to generate INSERT template: ${error}`);
   }
 }

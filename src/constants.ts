@@ -71,6 +71,7 @@ export const COMMANDS = {
   // Enhanced table commands
   SHOW_TABLE_INFO: `${EXTENSION_ID}.showTableInfo`,
   RENAME_TABLE: `${EXTENSION_ID}.renameTable`,
+  GENERATE_INSERT: `${EXTENSION_ID}.generateInsert`,
 } as const;
 
 /** Configuration keys (without extension prefix) */

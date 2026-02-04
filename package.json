@@ -277,6 +277,12 @@
         "title": "Rename Table...",
         "category": "DuckDB",
         "icon": "$(edit)"
+      },
+      {
+        "command": "duckdb-powerhouse.generateInsert",
+        "title": "Generate INSERT Template",
+        "category": "DuckDB",
+        "icon": "$(add)"
       }
     ],
     "viewsContainers": {
@@ -371,6 +377,11 @@
           "command": "duckdb-powerhouse.renameTable",
           "when": "view == duckdbExplorer && viewItem == table",
           "group": "5_ddl@1"
+        },
+        {
+          "command": "duckdb-powerhouse.generateInsert",
+          "when": "view == duckdbExplorer && viewItem == table",
+          "group": "2_query@4"
         },
         {
           "command": "duckdb-powerhouse.truncateTable",

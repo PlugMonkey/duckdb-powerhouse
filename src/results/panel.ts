@@ -202,6 +202,10 @@ export class ResultsPanel {
         }
         break;
 
+      case 'insertRow':
+        void this.generateInsertTemplate();
+        break;
+
       default:
         Logger.warn('Unknown webview message', message);
     }
@@ -312,6 +316,80 @@ export class ResultsPanel {
       sql: result.sql,
       error: result.error,
     };
+  }
+
+  /**
+   * Generate INSERT template from current results.
+   */
+  private async generateInsertTemplate(): Promise<void> {
+    const result = this.results[0];
+    if (!result || result.error) {
+      void vscode.window.showWarningMessage('No results to create INSERT from');
+      return;
+    }
+
+    // Try to detect table name from SQL
+    const sql = result.sql.trim();
+    let tableName = 'table_name';
+
+    // Simple regex to detect: SELECT ... FROM table_name or FROM "schema"."table"
+    const fromMatch = sql.match(/FROM\s+(?:"([^"]+)"\.)?(?:"([^"]+)"|(\w+))/i);
+    if (fromMatch) {
+      const schema = fromMatch[1];
+      const quotedTable = fromMatch[2];
+      const unquotedTable = fromMatch[3];
+      const detectedTable = quotedTable || unquotedTable;
+
+      if (detectedTable) {
+        tableName = schema ? `"${schema}"."${detectedTable}"` : `"${detectedTable}"`;
+      }
+    }
+
+    // Ask user to confirm/edit table name
+    const confirmedTable = await vscode.window.showInputBox({
+      prompt: 'Enter table name for INSERT',
+      value: tableName,
+      title: 'Insert Row',
+    });
+
+    if (!confirmedTable) return;
+
+    // Generate INSERT with column names from result
+    const columns = result.columns.map(c => `"${c.name}"`).join(',\n    ');
+
+    // Generate placeholder values based on column types
+    const values = result.columns.map((col, i) => {
+      // Try to infer type from first non-null value
+      const firstRow = result.rows.find(r => r[i]?.type !== 'null');
+      const cellType = firstRow?.[i]?.type || 'string';
+
+      switch (cellType) {
+        case 'number':
+          return '0';
+        case 'boolean':
+          return 'true';
+        case 'null':
+          return 'NULL';
+        default:
+          return "'value'";
+      }
+    }).join(',\n    ');
+
+    const insertSql = `-- Insert into ${confirmedTable}
+INSERT INTO ${confirmedTable} (
+    ${columns}
+)
+VALUES (
+    ${values}
+);
+`;
+
+    // Open in a new SQL document
+    const doc = await vscode.workspace.openTextDocument({
+      language: 'sql',
+      content: insertSql,
+    });
+    await vscode.window.showTextDocument(doc);
   }
 
   /**

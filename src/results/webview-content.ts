@@ -122,6 +122,7 @@ export function getWebviewContent(
         <span class="stat">${result.executionTimeMs.toFixed(0)}ms</span>
         ${result.truncated ? '<span class="stat warning">Results truncated</span>' : ''}
         <span class="stat-spacer"></span>
+        <button class="btn" onclick="insertRow()" title="Generate INSERT statement">➕ Insert</button>
         <button class="btn" onclick="copyAll()" title="Copy all to clipboard">📋 Copy All</button>
         <button class="btn" onclick="exportCsv()" title="Export to CSV">📄 CSV</button>
         <button class="btn" onclick="exportTsv()" title="Export to TSV">📋 TSV</button>
@@ -141,6 +142,8 @@ export function getWebviewContent(
     `;
 
     const rowNumHeader = options.showRowNumbers ? '<th class="row-num-header">#</th>' : '';
+    const rowNumFilter = options.showRowNumbers ? '<th class="row-num-header filter-cell"></th>' : '';
+
     // Add type hints to column headers
     const headerHtml = result.columns.map((col, i) => {
       // Infer type from first non-null cell
@@ -151,6 +154,37 @@ export function getWebviewContent(
           <span class="col-name">${escapeHtml(col.name)}</span>
           <span class="col-type">${typeHint}</span>
           <span class="sort-indicator"></span>
+        </th>
+      `;
+    }).join('');
+
+    // Filter row with inputs for each column
+    const filterRowHtml = result.columns.map((col, i) => {
+      const firstCell = result.rows.find(row => row[i]?.type !== 'null')?.[i];
+      const typeHint = firstCell ? firstCell.type : 'string';
+      const isNumeric = typeHint === 'number';
+      return `
+        <th class="filter-cell">
+          <div class="filter-wrapper">
+            <select class="filter-op" data-col="${i}" onchange="applyFilters()" title="Filter operator">
+              <option value="">-</option>
+              <option value="=" ${!isNumeric ? 'selected' : ''}>=</option>
+              <option value="!=">\u2260</option>
+              ${isNumeric ? '<option value=">" selected>&gt;</option>' : ''}
+              ${isNumeric ? '<option value=">=">\u2265</option>' : ''}
+              ${isNumeric ? '<option value="<">&lt;</option>' : ''}
+              ${isNumeric ? '<option value="<=">\u2264</option>' : ''}
+              <option value="contains">contains</option>
+              <option value="starts">starts</option>
+              <option value="ends">ends</option>
+              <option value="null">is null</option>
+              <option value="notnull">not null</option>
+            </select>
+            <input type="text" class="filter-input" data-col="${i}"
+                   placeholder="Filter..."
+                   onkeyup="applyFilters()"
+                   title="Type to filter ${escapeHtml(col.name)}">
+          </div>
         </th>
       `;
     }).join('');
@@ -190,13 +224,15 @@ export function getWebviewContent(
       <div class="table-container" data-total-rows="${result.rows.length}" data-rows-per-page="${ROWS_PER_PAGE}">
         <table id="results-table">
           <thead>
-            <tr>${rowNumHeader}${headerHtml}</tr>
+            <tr class="header-row">${rowNumHeader}${headerHtml}</tr>
+            <tr class="filter-row">${rowNumFilter}${filterRowHtml}</tr>
           </thead>
           <tbody>
             ${rowsHtml}
           </tbody>
         </table>
       </div>
+      <div class="filter-status" id="filter-status"></div>
       ${paginationHtml}
     `;
   }
@@ -638,6 +674,63 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
       opacity: 0.6;
     }
 
+    /* Filter row styles */
+    .filter-row th {
+      background: var(--header-bg);
+      padding: 4px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .filter-cell {
+      padding: 2px 4px !important;
+    }
+
+    .filter-wrapper {
+      display: flex;
+      gap: 2px;
+    }
+
+    .filter-op {
+      width: 50px;
+      padding: 2px;
+      font-size: 11px;
+      background: var(--vscode-dropdown-background);
+      color: var(--vscode-dropdown-foreground);
+      border: 1px solid var(--vscode-dropdown-border);
+      border-radius: 2px;
+    }
+
+    .filter-input {
+      flex: 1;
+      min-width: 60px;
+      padding: 2px 4px;
+      font-size: 11px;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 2px;
+    }
+
+    .filter-input:focus {
+      outline: 1px solid var(--vscode-focusBorder);
+    }
+
+    .filter-status {
+      padding: 4px 12px;
+      font-size: 11px;
+      background: var(--vscode-editorInfo-background);
+      color: var(--vscode-editorInfo-foreground);
+      display: none;
+    }
+
+    .filter-status.active {
+      display: block;
+    }
+
+    tr.filtered-out {
+      display: none;
+    }
+
     .pagination {
       display: flex;
       justify-content: center;
@@ -700,6 +793,10 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
       vscode.postMessage({ command: 'exportTsv' });
     }
 
+    function insertRow() {
+      vscode.postMessage({ command: 'insertRow' });
+    }
+
     function switchResult(indexStr) {
       const index = parseInt(indexStr, 10);
       vscode.postMessage({ command: 'switchResult', index });
@@ -715,6 +812,109 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
         const sql = editor.value.trim();
         if (sql) {
           vscode.postMessage({ command: 'runQuery', sql: sql });
+        }
+      }
+    }
+
+    // Column filtering
+    function applyFilters() {
+      const table = document.getElementById('results-table');
+      if (!table) return;
+
+      const tbody = table.querySelector('tbody');
+      const rows = tbody.querySelectorAll('tr');
+      const filterOps = document.querySelectorAll('.filter-op');
+      const filterInputs = document.querySelectorAll('.filter-input');
+
+      // Collect active filters
+      const filters = [];
+      filterOps.forEach((select, i) => {
+        const op = select.value;
+        const input = filterInputs[i];
+        const value = input ? input.value.trim().toLowerCase() : '';
+
+        if (op && (value || op === 'null' || op === 'notnull')) {
+          filters.push({ col: i, op, value });
+        }
+      });
+
+      let visibleCount = 0;
+      let totalCount = rows.length;
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td:not(.row-num)');
+        let match = true;
+
+        for (const filter of filters) {
+          const cell = cells[filter.col];
+          if (!cell) continue;
+
+          const rawValue = cell.dataset.raw;
+          let cellValue;
+          try {
+            cellValue = JSON.parse(rawValue);
+          } catch {
+            cellValue = cell.textContent;
+          }
+
+          const cellText = (cellValue === null ? '' : String(cellValue)).toLowerCase();
+          const isNull = cellValue === null;
+
+          switch (filter.op) {
+            case '=':
+              match = cellText === filter.value;
+              break;
+            case '!=':
+              match = cellText !== filter.value;
+              break;
+            case '>':
+              match = !isNull && parseFloat(cellValue) > parseFloat(filter.value);
+              break;
+            case '>=':
+              match = !isNull && parseFloat(cellValue) >= parseFloat(filter.value);
+              break;
+            case '<':
+              match = !isNull && parseFloat(cellValue) < parseFloat(filter.value);
+              break;
+            case '<=':
+              match = !isNull && parseFloat(cellValue) <= parseFloat(filter.value);
+              break;
+            case 'contains':
+              match = cellText.includes(filter.value);
+              break;
+            case 'starts':
+              match = cellText.startsWith(filter.value);
+              break;
+            case 'ends':
+              match = cellText.endsWith(filter.value);
+              break;
+            case 'null':
+              match = isNull;
+              break;
+            case 'notnull':
+              match = !isNull;
+              break;
+          }
+
+          if (!match) break;
+        }
+
+        if (match) {
+          row.classList.remove('filtered-out');
+          visibleCount++;
+        } else {
+          row.classList.add('filtered-out');
+        }
+      });
+
+      // Update filter status
+      const statusEl = document.getElementById('filter-status');
+      if (statusEl) {
+        if (filters.length > 0) {
+          statusEl.textContent = \`Showing \${visibleCount} of \${totalCount} rows (filtered)\`;
+          statusEl.classList.add('active');
+        } else {
+          statusEl.classList.remove('active');
         }
       }
     }

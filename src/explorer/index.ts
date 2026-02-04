@@ -30,5 +30,6 @@ export {
   // Enhanced table actions
   showTableInfo,
   renameTable,
+  generateInsertTemplate,
 } from './actions';
 export * from './nodes';

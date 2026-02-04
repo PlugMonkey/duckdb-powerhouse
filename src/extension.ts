@@ -29,6 +29,7 @@ import {
   sortByColumn,
   showTableInfo,
   renameTable,
+  generateInsertTemplate,
 } from './explorer';
 import {
   SqlCompletionProvider,
@@ -251,6 +252,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(COMMANDS.RENAME_TABLE, (node: TableNode) => {
       void renameTable(node, connectionManager);
+    }),
+
+    vscode.commands.registerCommand(COMMANDS.GENERATE_INSERT, (node: TableNode) => {
+      void generateInsertTemplate(node, connectionManager);
     }),
 
     // Enhanced column commands
