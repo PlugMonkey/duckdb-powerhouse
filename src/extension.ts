@@ -38,6 +38,7 @@ import {
   cancelQuery,
   onQueryResult,
   newSqlFile,
+  executeRawSql,
 } from './editor';
 import { ResultsPanel } from './results';
 import {
@@ -188,6 +189,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(COMMANDS.CANCEL_QUERY, () => {
       cancelQuery();
+    }),
+
+    vscode.commands.registerCommand(COMMANDS.EXECUTE_RAW_SQL, (sql: string) => {
+      void executeRawSql(connectionManager, sql);
     })
   );
 
@@ -438,25 +443,14 @@ async function showGettingStartedGuide(): Promise<void> {
     },
     {
       label: '$(lightbulb) Quick Tips',
-      description: 'Query files directly without importing',
-      detail: "SELECT * FROM read_csv('file.csv')",
-      action: 'tip1',
-    },
-    {
-      label: '$(symbol-keyword) SQL Snippets',
-      description: "Type 'ct' for CREATE TABLE, 'ctas' for CREATE AS SELECT",
-      action: 'tip2',
-    },
-    {
-      label: '$(play) Run Query',
-      description: 'Cmd+Enter to execute SQL',
-      action: 'tip3',
+      description: 'Browse tips for using DuckDB Powerhouse',
+      action: 'quickTips',
     },
   ] as const;
 
   const selected = await vscode.window.showQuickPick(items.filter(i => i.label !== ''), {
     title: 'DuckDB Powerhouse - Getting Started',
-    placeHolder: 'Select an action or learn a tip',
+    placeHolder: 'Select an action to get started',
   });
 
   if (!selected || !('action' in selected)) return;
@@ -474,34 +468,202 @@ async function showGettingStartedGuide(): Promise<void> {
     case 'newSql':
       await vscode.commands.executeCommand('duckdb-powerhouse.newSqlFile');
       break;
-    case 'tip1': {
-      // Open new SQL file with example
+    case 'quickTips':
+      await showQuickTips();
+      break;
+  }
+}
+
+/**
+ * Show Quick Tips submenu with browsable tips.
+ */
+async function showQuickTips(): Promise<void> {
+  const tips = [
+    {
+      label: '$(file-code) Query Files Directly',
+      description: 'No import needed - query CSV, Parquet, JSON files',
+      action: 'queryFiles',
+    },
+    {
+      label: '$(keyboard) Keyboard Shortcuts',
+      description: 'Essential shortcuts for fast workflow',
+      action: 'shortcuts',
+    },
+    {
+      label: '$(symbol-keyword) SQL Snippets',
+      description: 'Type prefixes + Tab for quick SQL templates',
+      action: 'snippets',
+    },
+    {
+      label: '$(globe) Query Remote Data',
+      description: 'Load data directly from URLs',
+      action: 'remoteData',
+    },
+    {
+      label: '$(table) PIVOT & UNPIVOT',
+      description: 'Transform data with DuckDB pivot syntax',
+      action: 'pivot',
+    },
+    {
+      label: '$(graph) SUMMARIZE',
+      description: 'Get instant statistics on any table',
+      action: 'summarize',
+    },
+    {
+      label: '',
+      kind: vscode.QuickPickItemKind.Separator,
+    },
+    {
+      label: '$(arrow-left) Back to Getting Started',
+      description: '',
+      action: 'back',
+    },
+  ] as const;
+
+  const selected = await vscode.window.showQuickPick(tips.filter(t => t.label !== ''), {
+    title: 'DuckDB Powerhouse - Quick Tips',
+    placeHolder: 'Select a tip to learn more',
+  });
+
+  if (!selected || !('action' in selected)) return;
+
+  switch (selected.action) {
+    case 'queryFiles': {
       const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
         content: `-- Query files directly without importing!
--- Just replace the path with your file
+-- DuckDB can read CSV, Parquet, and JSON files natively.
 
-SELECT * FROM read_csv('path/to/your/file.csv') LIMIT 100;
+-- CSV files
+SELECT * FROM read_csv('path/to/data.csv') LIMIT 100;
 
--- Or for Parquet files:
--- SELECT * FROM read_parquet('data.parquet');
+-- Parquet files (columnar format, very fast)
+SELECT * FROM read_parquet('path/to/data.parquet') LIMIT 100;
 
--- Or JSON:
--- SELECT * FROM read_json('data.json');
+-- JSON files
+SELECT * FROM read_json('path/to/data.json') LIMIT 100;
+
+-- Pro tip: Right-click any supported file in VS Code Explorer
+-- to Preview, Describe Schema, or Import to Table!
 `,
       });
       await vscode.window.showTextDocument(doc);
       break;
     }
-    case 'tip2':
+
+    case 'shortcuts':
       void vscode.window.showInformationMessage(
-        'SQL Snippets: Type "ct" + Tab for CREATE TABLE, "csv" for read_csv(), "parquet" for read_parquet()'
+        'Keyboard Shortcuts:\n' +
+        '• Cmd/Ctrl+Enter: Run Query\n' +
+        '• Cmd/Ctrl+Shift+Enter: Run Selection\n' +
+        '• Cmd/Ctrl+Alt+N: New SQL File\n' +
+        '• Cmd/Ctrl+Shift+E: Explain Query',
+        { modal: true }
       );
       break;
-    case 'tip3':
-      void vscode.window.showInformationMessage(
-        'Keyboard shortcuts: Cmd+Enter (Run Query), Cmd+Shift+Enter (Run Selection), Cmd+Alt+N (New SQL File)'
-      );
+
+    case 'snippets': {
+      const doc = await vscode.workspace.openTextDocument({
+        language: 'sql',
+        content: `-- SQL Snippets - Type prefix + Tab to expand
+--
+-- Available snippets:
+--   ct      → CREATE TABLE
+--   ctas    → CREATE TABLE AS SELECT
+--   ins     → INSERT INTO
+--   csv     → SELECT FROM read_csv()
+--   parquet → SELECT FROM read_parquet()
+--   json    → SELECT FROM read_json()
+--   cte     → WITH clause (Common Table Expression)
+--   pivot   → PIVOT syntax
+--   unpivot → UNPIVOT syntax
+--   summarize → SUMMARIZE table
+--   describe  → DESCRIBE table
+--   copy csv  → COPY TO CSV
+--   copy parquet → COPY TO Parquet
+
+-- Try it! Type "csv" below and press Tab:
+
+`,
+      });
+      await vscode.window.showTextDocument(doc);
+      break;
+    }
+
+    case 'remoteData': {
+      const doc = await vscode.workspace.openTextDocument({
+        language: 'sql',
+        content: `-- Query remote data directly from URLs!
+-- DuckDB can fetch and query HTTP/HTTPS URLs.
+
+-- Example: Query a remote CSV
+SELECT *
+FROM read_csv('https://raw.githubusercontent.com/datasets/covid-19/main/data/countries-aggregated.csv')
+LIMIT 100;
+
+-- Example: Query remote Parquet (very efficient!)
+-- SELECT * FROM read_parquet('https://example.com/data.parquet');
+
+-- Pro tip: Use "Import from URL" command to save remote data
+-- as a local table for faster repeated queries.
+`,
+      });
+      await vscode.window.showTextDocument(doc);
+      break;
+    }
+
+    case 'pivot': {
+      const doc = await vscode.workspace.openTextDocument({
+        language: 'sql',
+        content: `-- DuckDB PIVOT and UNPIVOT
+-- Transform data between wide and long formats.
+
+-- PIVOT: Convert rows to columns
+-- Syntax: PIVOT table ON column_to_pivot USING aggregation(value)
+
+-- Example: Sales by product and region
+-- PIVOT sales ON region USING SUM(amount);
+
+-- UNPIVOT: Convert columns to rows
+-- Syntax: UNPIVOT table ON columns INTO NAME name VALUE value
+
+-- Example: Convert wide table to long format
+-- UNPIVOT monthly_data ON (jan, feb, mar) INTO NAME month VALUE sales;
+
+-- Try the "pivot" and "unpivot" snippets for templates!
+`,
+      });
+      await vscode.window.showTextDocument(doc);
+      break;
+    }
+
+    case 'summarize': {
+      const doc = await vscode.workspace.openTextDocument({
+        language: 'sql',
+        content: `-- SUMMARIZE - Get instant statistics on any table or query
+-- DuckDB's SUMMARIZE gives you a quick overview of your data.
+
+-- Summarize a table
+SUMMARIZE my_table;
+
+-- Summarize a query result
+SUMMARIZE SELECT * FROM read_csv('data.csv');
+
+-- Output includes for each column:
+-- • column_name, column_type
+-- • min, max, avg (for numeric)
+-- • unique count, null count
+-- • approx_unique (for high cardinality)
+
+-- Try the "summarize" snippet for a quick template!
+`,
+      });
+      await vscode.window.showTextDocument(doc);
+      break;
+    }
+
+    case 'back':
+      await showGettingStartedGuide();
       break;
   }
 }

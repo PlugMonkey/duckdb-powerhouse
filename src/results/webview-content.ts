@@ -129,12 +129,15 @@ export function getWebviewContent(
       </div>
     `;
 
-    // Query SQL collapsible
+    // Query SQL editor (editable)
     const querySqlHtml = `
-      <details class="query-details">
-        <summary>SQL Query</summary>
-        <pre class="sql">${escapeHtml(result.sql)}</pre>
-      </details>
+      <div class="query-editor">
+        <div class="query-editor-header">
+          <span class="query-label">SQL Query</span>
+          <button class="btn btn-run" onclick="runQuery()" title="Run query (Ctrl+Enter)">▶ Run</button>
+        </div>
+        <textarea id="sql-editor" class="sql-textarea" spellcheck="false">${escapeHtml(result.sql)}</textarea>
+      </div>
     `;
 
     const rowNumHeader = options.showRowNumbers ? '<th class="row-num-header">#</th>' : '';
@@ -562,6 +565,54 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
       cursor: not-allowed;
     }
 
+    .query-editor {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .query-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .query-label {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .btn-run {
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+    }
+
+    .btn-run:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
+
+    .sql-textarea {
+      width: 100%;
+      min-height: 60px;
+      max-height: 200px;
+      padding: 8px 12px;
+      font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
+      line-height: 1.4;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: none;
+      border-bottom: 1px solid var(--border-color);
+      resize: vertical;
+      outline: none;
+    }
+
+    .sql-textarea:focus {
+      border-color: var(--vscode-focusBorder);
+    }
+
     .query-details {
       margin: 0;
       padding: 8px 12px;
@@ -657,6 +708,27 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
     function clearResults() {
       vscode.postMessage({ command: 'clearResults' });
     }
+
+    function runQuery() {
+      const editor = document.getElementById('sql-editor');
+      if (editor) {
+        const sql = editor.value.trim();
+        if (sql) {
+          vscode.postMessage({ command: 'runQuery', sql: sql });
+        }
+      }
+    }
+
+    // Handle Ctrl+Enter in SQL editor to run query
+    document.addEventListener('keydown', (e) => {
+      const target = e.target;
+      if (target && target.id === 'sql-editor') {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          runQuery();
+        }
+      }
+    });
 
     // Pagination state
     let currentPage = 0;

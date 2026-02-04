@@ -196,6 +196,12 @@ export class ResultsPanel {
         this.updateContent();
         break;
 
+      case 'runQuery':
+        if (message.sql) {
+          void vscode.commands.executeCommand('duckdb-powerhouse.executeRawSql', message.sql);
+        }
+        break;
+
       default:
         Logger.warn('Unknown webview message', message);
     }
@@ -326,4 +332,5 @@ interface WebviewMessage {
   value?: unknown;
   row?: number;
   index?: number;
+  sql?: string;
 }

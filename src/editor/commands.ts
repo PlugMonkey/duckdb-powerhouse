@@ -361,3 +361,23 @@ export async function explainQuery(connectionManager: ConnectionManager): Promis
   const explainSql = `EXPLAIN ${sql}`;
   await executeAndDisplay(explainSql, connectionManager);
 }
+
+/**
+ * Execute raw SQL directly (used by Results panel).
+ */
+export async function executeRawSql(
+  connectionManager: ConnectionManager,
+  sql: string
+): Promise<void> {
+  if (!connectionManager.isConnected) {
+    void vscode.window.showWarningMessage('Not connected to a database');
+    return;
+  }
+
+  if (!sql.trim()) {
+    void vscode.window.showWarningMessage('No SQL to execute');
+    return;
+  }
+
+  await executeAndDisplay(sql, connectionManager);
+}

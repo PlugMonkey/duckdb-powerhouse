@@ -51,6 +51,7 @@ export const COMMANDS = {
   // Results panel commands
   CLEAR_RESULTS: `${EXTENSION_ID}.clearResults`,
   EXPORT_TSV: `${EXTENSION_ID}.exportTsv`,
+  EXECUTE_RAW_SQL: `${EXTENSION_ID}.executeRawSql`,
   // Editor commands
   NEW_SQL_FILE: `${EXTENSION_ID}.newSqlFile`,
   // Data operations commands

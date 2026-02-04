@@ -9,6 +9,6 @@
  */
 
 export { SqlCompletionProvider } from './completion';
-export { runQuery, runSelectedQuery, explainQuery, cancelQuery, isQueryRunning, onQueryResult, queryResultEmitter, newSqlFile } from './commands';
+export { runQuery, runSelectedQuery, explainQuery, cancelQuery, isQueryRunning, onQueryResult, queryResultEmitter, newSqlFile, executeRawSql } from './commands';
 export type { QueryExecutionResult } from './commands';
 export { getAllKeywords, getKeywordsByCategory, SQL_KEYWORDS } from './sql-keywords';
