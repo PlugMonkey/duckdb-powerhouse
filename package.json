@@ -326,6 +326,11 @@
         {
           "command": "duckdb-powerhouse.previewTable",
           "when": "view == duckdbExplorer && viewItem == table",
+          "group": "inline"
+        },
+        {
+          "command": "duckdb-powerhouse.previewTable",
+          "when": "view == duckdbExplorer && viewItem == table",
           "group": "1_query@1"
         },
         {
