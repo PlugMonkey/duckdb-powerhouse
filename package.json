@@ -82,7 +82,7 @@
       },
       {
         "command": "duckdb-powerhouse.previewTable",
-        "title": "Preview Data",
+        "title": "View Data",
         "category": "DuckDB",
         "icon": "$(eye)"
       },
@@ -109,7 +109,7 @@
       },
       {
         "command": "duckdb-powerhouse.previewFile",
-        "title": "Preview Data",
+        "title": "View Data",
         "category": "DuckDB",
         "icon": "$(eye)"
       },

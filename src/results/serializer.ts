@@ -26,6 +26,8 @@ export interface WebviewResultData {
   error?: string;
   /** Timestamp when query was executed */
   timestamp: number;
+  /** Optional source name (e.g., table name) for display */
+  source?: string;
 }
 
 /**
@@ -148,6 +150,7 @@ export function serializeResult(result: QueryExecutionResult): WebviewResultData
     truncated: result.truncated,
     error: result.error,
     timestamp: Date.now(),
+    source: result.source,
   };
 }
 

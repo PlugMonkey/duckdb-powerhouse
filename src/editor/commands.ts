@@ -16,6 +16,8 @@ export interface QueryExecutionResult {
   truncated: boolean;
   limitApplied?: boolean;
   error?: string;
+  /** Optional source name for display (e.g., table name, file name) */
+  source?: string;
 }
 
 /**

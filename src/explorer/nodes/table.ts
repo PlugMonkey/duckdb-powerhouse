@@ -19,6 +19,13 @@ export class TableNode extends BaseNode {
     this.iconPath = new vscode.ThemeIcon('table');
     this.tooltip = this.buildTooltip();
     this.description = rowCount !== undefined ? `${rowCount.toLocaleString()} rows` : undefined;
+
+    // Double-click to view data
+    this.command = {
+      command: 'duckdb-powerhouse.previewTable',
+      title: 'View Data',
+      arguments: [this],
+    };
   }
 
   private buildTooltip(): vscode.MarkdownString {

@@ -42,6 +42,7 @@ export async function previewTable(
       executionTimeMs,
       truncated: results.length >= DEFAULTS.PREVIEW_LIMIT,
       limitApplied: true,
+      source: table.name,
     };
 
     // Emit to Results Panel (same as running a query)

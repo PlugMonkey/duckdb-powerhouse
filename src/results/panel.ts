@@ -130,12 +130,14 @@ export class ResultsPanel {
 
     this.panel.webview.html = html;
 
-    // Update title with row count
+    // Update title with source name or row count
     if (currentResult) {
       if (currentResult.error) {
         this.panel.title = 'DuckDB Results (Error)';
+      } else if (currentResult.source) {
+        this.panel.title = `${currentResult.source} (${currentResult.rowCount} rows)`;
       } else {
-        this.panel.title = `DuckDB Results (${currentResult.rowCount} rows)`;
+        this.panel.title = `Query Results (${currentResult.rowCount} rows)`;
       }
     }
   }

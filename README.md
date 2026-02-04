@@ -51,7 +51,7 @@ Fast in-memory analytics with DuckDB inside VS Code.
 - **Export Data**: Export tables or query results to CSV, Parquet, or JSON
 
 ### Table Operations
-- Preview table data in Results Panel
+- View table data in Results Panel
 - Show table info (rows, columns, size)
 - Copy SELECT/CREATE TABLE statements
 - Copy as CSV or JSON
@@ -122,7 +122,7 @@ Configure via VS Code Settings (`Ctrl+,` / `Cmd+,`):
 ## Context Menus
 
 ### Table Context Menu
-- Preview Data
+- View Data
 - New Query
 - Show Table Info
 - Copy SELECT/CREATE TABLE/Table Name
@@ -143,7 +143,7 @@ Configure via VS Code Settings (`Ctrl+,` / `Cmd+,`):
 - Refresh
 
 ### File Context Menu
-- Preview Data
+- View Data
 - Preview with Options (CSV only)
 - Describe Schema
 - Import to Table
