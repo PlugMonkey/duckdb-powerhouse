@@ -369,12 +369,14 @@ export async function executeRawSql(
   connectionManager: ConnectionManager,
   sql: string
 ): Promise<void> {
+  Logger.info('executeRawSql called', { sql: sql?.slice(0, 50), connected: connectionManager.isConnected });
+
   if (!connectionManager.isConnected) {
     void vscode.window.showWarningMessage('Not connected to a database');
     return;
   }
 
-  if (!sql.trim()) {
+  if (!sql?.trim()) {
     void vscode.window.showWarningMessage('No SQL to execute');
     return;
   }

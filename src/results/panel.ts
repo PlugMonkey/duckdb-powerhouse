@@ -198,7 +198,10 @@ export class ResultsPanel {
 
       case 'runQuery':
         if (message.sql) {
+          Logger.info('Running query from Results Panel', { sql: message.sql.slice(0, 50) });
           void vscode.commands.executeCommand('duckdb-powerhouse.executeRawSql', message.sql);
+        } else {
+          Logger.warn('runQuery message received but no SQL provided');
         }
         break;
 

@@ -808,7 +808,7 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
 
     function runQuery() {
       const editor = document.getElementById('sql-editor');
-      if (editor) {
+      if (editor && editor instanceof HTMLTextAreaElement) {
         const sql = editor.value.trim();
         if (sql) {
           vscode.postMessage({ command: 'runQuery', sql: sql });
@@ -922,7 +922,7 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
     // Handle Ctrl+Enter in SQL editor to run query
     document.addEventListener('keydown', (e) => {
       const target = e.target;
-      if (target && target.id === 'sql-editor') {
+      if (target instanceof HTMLTextAreaElement && target.id === 'sql-editor') {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
           runQuery();
