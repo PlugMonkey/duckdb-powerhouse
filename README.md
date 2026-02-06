@@ -136,7 +136,7 @@ Type prefix + Tab to expand:
 | `pivot` | DuckDB PIVOT syntax |
 | `ctas` | CREATE TABLE AS SELECT |
 
-[See all 20+ snippets](snippets/sql.json)
+[See all 20 snippets](snippets/sql.json)
 
 ---
 
