@@ -5,6 +5,14 @@ All notable changes to [DuckDB Powerhouse](https://plugmonkey.xyz/product/duckdb
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-02-06
+
+### Added
+- **Remote data sources**: Connect to MotherDuck, PostgreSQL, and S3 data lakes
+- **Query history persistence**: History now survives VS Code restarts
+- **Copy SQL button**: Copy the current query directly from the results panel
+- **Open source alignment**: Public repo with CONTRIBUTING.md, ROADMAP.md, and marketplace badges
+
 ## [1.0.0] - 2026-02-03
 
 ### Added

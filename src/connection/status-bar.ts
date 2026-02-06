@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { COMMANDS, EXTENSION_NAME } from '../constants';
-import { ConnectionState } from '../types';
+import { ConnectionState, ConnectionType, getConnectionPath } from '../types';
 import { ConnectionManager } from './manager';
 
 /**
@@ -53,15 +53,17 @@ export class ConnectionStatusBar implements vscode.Disposable {
         break;
 
       case 'connected': {
-        const typeIcon = config?.type === 'memory' ? '$(vm)' : '$(file)';
+        const typeIcon = this.getTypeIcon(config?.type);
         const name = config?.name ?? 'Connected';
         this.statusBarItem.text = `${typeIcon} DuckDB: ${name}`;
+
+        const path = config ? getConnectionPath(config) : undefined;
         this.statusBarItem.tooltip = new vscode.MarkdownString(
           `**${EXTENSION_NAME}**\n\n` +
           `Status: Connected\n\n` +
           `Type: ${this.connectionManager.getTypeDisplay()}\n\n` +
           `Name: ${name}` +
-          (config?.path ? `\n\nPath: \`${config.path}\`` : '')
+          (path ? `\n\nPath: \`${path}\`` : '')
         );
         this.statusBarItem.backgroundColor = undefined;
         break;
@@ -75,6 +77,22 @@ export class ConnectionStatusBar implements vscode.Disposable {
         );
         break;
     }
+  }
+
+  /**
+   * Get the icon for a connection type
+   */
+  private getTypeIcon(type: ConnectionType | undefined): string {
+    if (!type) return '$(database)';
+
+    const icons: Record<ConnectionType, string> = {
+      memory: '$(vm)',
+      file: '$(file)',
+      motherduck: '$(cloud)',
+      postgres: '$(server)',
+      s3: '$(cloud-upload)',
+    };
+    return icons[type];
   }
 
   /**

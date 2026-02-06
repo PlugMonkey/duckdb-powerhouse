@@ -7,6 +7,25 @@ import { Logger } from '../utils/logger';
 import { serializeResult, WebviewResultData } from './serializer';
 import { getWebviewContent } from './webview-content';
 
+/** Storage key for persisted query history */
+const HISTORY_STORAGE_KEY = 'queryHistory';
+
+/** Maximum number of history items to persist (subset of in-memory history) */
+const MAX_PERSISTED_HISTORY = 25;
+
+/**
+ * Persisted history item (metadata only, no row data).
+ */
+interface PersistedHistoryItem {
+  id: string;
+  sql: string;
+  rowCount: number;
+  executionTimeMs: number;
+  error?: string;
+  timestamp: number;
+  source?: string;
+}
+
 /**
  * Manages the results panel webview.
  */
@@ -14,7 +33,8 @@ export class ResultsPanel {
   private static instance: ResultsPanel | undefined;
   private panel: vscode.WebviewPanel | undefined;
   private results: WebviewResultData[] = [];
-  private readonly maxResults = 10; // Keep last 10 results
+  private readonly maxResults = 50; // Keep last 50 results in memory
+  private globalState: vscode.Memento | undefined;
 
   private constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -26,6 +46,74 @@ export class ResultsPanel {
       ResultsPanel.instance = new ResultsPanel(extensionUri);
     }
     return ResultsPanel.instance;
+  }
+
+  /**
+   * Initialize the results panel with extension context for persistence.
+   * Must be called after getInstance to enable history persistence.
+   */
+  initialize(context: vscode.ExtensionContext): void {
+    this.globalState = context.globalState;
+    this.loadPersistedHistory();
+    Logger.info('Results panel initialized with history persistence');
+  }
+
+  /**
+   * Load persisted query history from global state.
+   */
+  private loadPersistedHistory(): void {
+    if (!this.globalState) {
+      return;
+    }
+
+    try {
+      const persisted = this.globalState.get<PersistedHistoryItem[]>(HISTORY_STORAGE_KEY, []);
+      if (persisted.length > 0) {
+        // Convert persisted items to WebviewResultData (without full rows data)
+        this.results = persisted.map(item => ({
+          id: item.id,
+          sql: item.sql,
+          columns: [],
+          rows: [],
+          rowCount: item.rowCount,
+          executionTimeMs: item.executionTimeMs,
+          truncated: false,
+          error: item.error,
+          timestamp: item.timestamp,
+          source: item.source,
+        }));
+        Logger.info(`Loaded ${persisted.length} items from query history`);
+      }
+    } catch (err) {
+      Logger.error('Failed to load query history', { error: err });
+    }
+  }
+
+  /**
+   * Persist query history to global state.
+   */
+  private persistHistory(): void {
+    if (!this.globalState) {
+      return;
+    }
+
+    try {
+      // Only persist metadata, not full row data
+      const toPersist: PersistedHistoryItem[] = this.results
+        .slice(0, MAX_PERSISTED_HISTORY)
+        .map(r => ({
+          id: r.id,
+          sql: r.sql,
+          rowCount: r.rowCount,
+          executionTimeMs: r.executionTimeMs,
+          error: r.error,
+          timestamp: r.timestamp,
+          source: r.source,
+        }));
+      void this.globalState.update(HISTORY_STORAGE_KEY, toPersist);
+    } catch (err) {
+      Logger.error('Failed to persist query history', { error: err });
+    }
   }
 
   /**
@@ -46,6 +134,9 @@ export class ResultsPanel {
     if (this.results.length > this.maxResults) {
       this.results = this.results.slice(0, this.maxResults);
     }
+
+    // Persist history metadata
+    this.persistHistory();
 
     this.ensurePanel();
     this.updateContent();
@@ -79,6 +170,7 @@ export class ResultsPanel {
     // Handle messages from the webview
     this.panel.webview.onDidReceiveMessage(
       (message: WebviewMessage) => {
+        Logger.info('Received webview message', { command: message.command });
         this.handleMessage(message);
       },
       undefined,
@@ -147,6 +239,10 @@ export class ResultsPanel {
    */
   private handleMessage(message: WebviewMessage): void {
     switch (message.command) {
+      case 'ready':
+        Logger.info('Webview script loaded and ready');
+        break;
+
       case 'copyCell':
         if (message.value !== undefined) {
           void vscode.env.clipboard.writeText(String(message.value));
@@ -195,7 +291,15 @@ export class ResultsPanel {
 
       case 'clearResults':
         this.results = [];
+        this.persistHistory(); // Clear persisted history too
         this.updateContent();
+        break;
+
+      case 'copySql':
+        if (this.results[0]?.sql) {
+          void vscode.env.clipboard.writeText(this.results[0].sql);
+          void vscode.window.showInformationMessage('SQL copied to clipboard');
+        }
         break;
 
       case 'runQuery':
@@ -363,7 +467,7 @@ export class ResultsPanel {
     const columns = result.columns.map(c => `"${c.name}"`).join(',\n    ');
 
     // Generate placeholder values based on column types
-    const values = result.columns.map((col, i) => {
+    const values = result.columns.map((_col, i) => {
       // Try to infer type from first non-null value
       const firstRow = result.rows.find(r => r[i]?.type !== 'null');
       const cellType = firstRow?.[i]?.type || 'string';

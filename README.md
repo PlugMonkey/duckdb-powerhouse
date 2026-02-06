@@ -1,101 +1,92 @@
 # DuckDB Powerhouse
 
-Fast in-memory analytics with DuckDB inside VS Code.
+**Query data where you code.** Fast in-memory analytics with DuckDB inside VS Code.
 
-[Product Page](https://plugmonkey.xyz/product/duckdb-powerhouse/) | [PlugMonkey](https://plugmonkey.xyz/)
+[![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/PlugMonkey.duckdb-powerhouse?label=VS%20Code%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=PlugMonkey.duckdb-powerhouse)
+[![Installs](https://img.shields.io/vscode-marketplace/i/PlugMonkey.duckdb-powerhouse)](https://marketplace.visualstudio.com/items?itemName=PlugMonkey.duckdb-powerhouse)
+[![Rating](https://img.shields.io/vscode-marketplace/r/PlugMonkey.duckdb-powerhouse)](https://marketplace.visualstudio.com/items?itemName=PlugMonkey.duckdb-powerhouse)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[Product Page](https://plugmonkey.xyz/product/duckdb-powerhouse/) | [Roadmap](ROADMAP.md) | [Contributing](CONTRIBUTING.md) | [PlugMonkey](https://plugmonkey.xyz/)
+
+---
+
+## Why DuckDB Powerhouse?
+
+**Stop context-switching.** Query Parquet, CSV, and JSON files directly in VS Code — no imports, no database setup, no leaving your editor.
+
+| Before | After |
+|--------|-------|
+| Open terminal → Write Python → Read file → Print results | Right-click file → View Data |
+| Install database → Configure connection → Switch apps | Install extension → Query |
+| 5-10 minutes | 5 seconds |
+
+---
+
+## Quick Start
+
+1. **Install** the extension from VS Code Marketplace
+2. **Connect** via the DuckDB sidebar (Cmd+Shift+P → "DuckDB: Create Connection")
+3. **Query** any SQL file with Cmd+Enter
+
+Or just **right-click any Parquet/CSV/JSON file** → "View Data" to explore instantly.
+
+---
 
 ## Features
 
-### Connection Management
-- **In-Memory Databases**: Create fast, temporary databases for quick analysis
-- **File-Based Databases**: Open existing or create new `.duckdb` files
-- **Connection History**: Quick access to recent connections
-- **Reconnect**: Easily reconnect to the last used database
+### Zero-Config File Querying
 
-### Data Explorer
-- Sidebar tree view of database structure
-- Browse schemas, tables, and columns with types
-- Table row count display
-- Context menus for quick actions on tables, columns, schemas
+Query data files directly without any import step:
 
-### Query Execution
-- Run queries with keyboard shortcuts
-- Run selected text as a query
-- Explain query execution plans
-- Cancel running queries
-- Configurable timeout protection
-- Auto-apply LIMIT to prevent memory issues
+```sql
+-- Query a Parquet file
+SELECT * FROM 'data/sales.parquet' WHERE amount > 1000;
+
+-- Join multiple CSV files
+SELECT a.*, b.category FROM 'orders.csv' a JOIN 'products.csv' b ON a.product_id = b.id;
+
+-- Aggregate JSON data
+SELECT date, SUM(value) FROM 'events.json' GROUP BY date;
+```
+
+**Supported formats:** Parquet, CSV, TSV, JSON, JSONL, NDJSON
+
+### Connect Anywhere
+
+| Source | Description |
+|--------|-------------|
+| **In-Memory** | Fast, temporary database for scratch work |
+| **File (.duckdb)** | Persistent local database |
+| **MotherDuck** | Cloud data warehouse |
+| **PostgreSQL** | Query external Postgres databases |
+| **S3** | Query Parquet/CSV in your data lake |
+
+### Schema Explorer
+
+Browse your data visually:
+- Databases → Schemas → Tables → Columns
+- See column types at a glance
+- Row counts per table
+- Right-click context menus for quick actions
 
 ### Results Panel
-- Sortable data grid with pagination
-- Column type indicators
-- Query history with quick switching
-- Export to CSV, JSON, or TSV
-- Copy cells, rows, or entire results
-- Keyboard navigation support
 
-### File Querying (No Import Needed!)
-- Query Parquet, CSV, JSON files directly
-- Custom delimiter and encoding options for CSV
-- Import files to database tables when needed
-- File size warnings for large files (>100MB)
-- Drag & drop files into SQL editor
+Modern data grid with:
+- Sortable columns
+- Pagination for large results
+- Export to CSV, JSON, TSV
+- Query history
+- Copy cells/rows to clipboard
 
-### Data Operations
-- **Create Table Wizard**: Multiple paths to create tables
-  - Import from local file
-  - Import from URL
-  - Create empty table with column definitions
-  - Create from SQL query (CTAS)
-- **Import Data**: File picker or URL import
-- **Export Data**: Export tables or query results to CSV, Parquet, or JSON
+### SQL Productivity
 
-### Table Operations
-- View table data in Results Panel
-- Show table info (rows, columns, size)
-- Copy SELECT/CREATE TABLE statements
-- Copy as CSV or JSON
-- Export to file
-- Rename, truncate, drop tables
+- **Autocomplete** for tables, columns, keywords
+- **Snippets** — type `csv` + Tab, `parquet` + Tab, `summarize` + Tab
+- **Explain query** — see execution plans
+- **Cancel queries** — stop long-running operations
 
-### Column Operations
-- Filter by column (generates WHERE clause query)
-- Sort by column (generates ORDER BY query)
-- Insert column name at cursor
-- Copy column name
-
-### SQL Snippets
-Type these prefixes and press Tab:
-- `ct` - CREATE TABLE
-- `ctas` - CREATE TABLE AS SELECT
-- `csv` - SELECT FROM read_csv()
-- `parquet` - SELECT FROM read_parquet()
-- `json` - SELECT FROM read_json()
-- `pivot` - DuckDB PIVOT syntax
-- `summarize` - DuckDB SUMMARIZE
-- And 15+ more...
-
-## Getting Started
-
-1. Open the DuckDB Powerhouse sidebar (database icon in activity bar)
-2. Click **Create Connection** or the **+** button
-3. Choose your connection type:
-   - **Create In-Memory Database** - Fast, temporary (data lost on close)
-   - **Open Existing Database** - Open an existing `.duckdb` file
-   - **Create New Database** - Create a new `.duckdb` file
-4. Write SQL in any `.sql` file
-5. Press `Cmd+Enter` (Mac) or `Ctrl+Enter` (Windows/Linux) to run
-6. View results in the Results Panel
-
-## Supported File Types
-
-| Format | Extensions |
-|--------|------------|
-| Parquet | `.parquet` |
-| CSV | `.csv`, `.tsv` |
-| JSON | `.json`, `.jsonl`, `.ndjson` |
-
-Right-click any supported file in the Explorer to preview, describe schema, or import to a table.
+---
 
 ## Keyboard Shortcuts
 
@@ -106,60 +97,115 @@ Right-click any supported file in the Explorer to preview, describe schema, or i
 | Explain Query | `Ctrl+Shift+E` | `Cmd+Shift+E` |
 | New SQL File | `Ctrl+Alt+N` | `Cmd+Alt+N` |
 
-## Settings
+---
 
-Configure via VS Code Settings (`Ctrl+,` / `Cmd+,`):
+## Use Cases
+
+### For Data Analysts
+- Explore CSV/Parquet files instantly
+- Filter and export subsets of data
+- Get quick statistics with `SUMMARIZE`
+
+### For Data Engineers
+- Test ETL queries locally
+- Query S3 data lakes
+- Federated queries to PostgreSQL
+
+### For Developers
+- Prototype database schemas
+- Test SQL before production
+- Stay in your IDE
+
+### For Data Scientists
+- 10-100x faster than Pandas for large files
+- SQL alternative for quick EDA
+- Export results for notebooks
+
+---
+
+## SQL Snippets
+
+Type prefix + Tab to expand:
+
+| Prefix | Expands To |
+|--------|------------|
+| `csv` | `SELECT * FROM read_csv('...')` |
+| `parquet` | `SELECT * FROM read_parquet('...')` |
+| `json` | `SELECT * FROM read_json('...')` |
+| `summarize` | `SUMMARIZE table_name` |
+| `pivot` | DuckDB PIVOT syntax |
+| `ctas` | CREATE TABLE AS SELECT |
+
+[See all 20+ snippets](snippets/sql.json)
+
+---
+
+## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `maxResultRows` | 10,000 | Maximum rows to fetch per query |
-| `defaultResultLimit` | 100 | Default LIMIT for table previews |
-| `autoConnect` | false | Auto-create in-memory connection on startup |
-| `showRowNumbers` | true | Show row numbers in results panel |
-| `confirmLargeResults` | true | Confirm before fetching large result sets |
-| `queryTimeout` | 0 | Query timeout in seconds (0 = no timeout) |
+| `maxResultRows` | 10,000 | Max rows per query |
+| `defaultResultLimit` | 100 | Default LIMIT for previews |
+| `queryTimeout` | 0 | Timeout in seconds (0 = none) |
+| `autoConnect` | false | Auto-connect on startup |
+| `s3.defaultRegion` | us-east-1 | Default AWS region |
+| `postgres.defaultPort` | 5432 | Default Postgres port |
+
+---
 
 ## Context Menus
 
-### Table Context Menu
-- View Data
-- New Query
-- Show Table Info
-- Copy SELECT/CREATE TABLE/Table Name
-- Copy as CSV/JSON
-- Export Table
-- Rename/Truncate/Drop Table
+### On Tables
+- View Data / New Query / Show Info
+- Copy SELECT / CREATE TABLE / Table Name
+- Copy as CSV / JSON
+- Export / Rename / Truncate / Drop
 
-### Column Context Menu
-- Filter by This Column
-- Sort by This Column
-- Insert Column Name
-- Copy Column Name
+### On Columns
+- Filter by Column → generates WHERE query
+- Sort by Column → generates ORDER BY query
+- Insert / Copy Column Name
 
-### Schema/Database Context Menu
-- Create Table
-- Import Data
-- Show Properties
-- Refresh
-
-### File Context Menu
-- View Data
-- Preview with Options (CSV only)
-- Describe Schema
+### On Data Files
+- View Data / Describe Schema
 - Import to Table
-- New Query
-- Copy SELECT Query
+- New Query / Copy SELECT
+
+---
 
 ## Requirements
 
-- VS Code 1.85.0 or higher
+- VS Code 1.85.0+
+- No external dependencies (DuckDB bundled)
+
+---
+
+## Roadmap
+
+- [x] Core query execution
+- [x] Schema explorer
+- [x] File querying (Parquet, CSV, JSON)
+- [x] Remote connections (MotherDuck, PostgreSQL, S3)
+- [x] Query history panel
+- [ ] Basic visualizations
+- [ ] AI-powered SQL (Premium)
+
+See [ROADMAP.md](ROADMAP.md) for the full roadmap.
+
+---
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
 
 ## About
 
-Built with DuckDB - the fast in-process analytical database.
+Built with [DuckDB](https://duckdb.org/) — the fast in-process analytical database.
 
-[PlugMonkey](https://plugmonkey.xyz/) builds developer tools and VS Code extensions to supercharge your workflow.
+**[PlugMonkey](https://plugmonkey.xyz/)** builds developer tools and VS Code extensions to supercharge your workflow.
 
 ## License
 
-MIT - Built by [PlugMonkey](https://plugmonkey.xyz/)
+MIT — Built by [PlugMonkey](https://plugmonkey.xyz/)

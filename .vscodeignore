@@ -32,8 +32,10 @@ package-lock.json
 **/test/**
 **/__tests__/**
 
-# Development artifacts
+# Internal development docs
+docs/**
 tasks/**
+CLAUDE.md
 
 # Other
 .DS_Store

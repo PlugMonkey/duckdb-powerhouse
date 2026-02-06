@@ -162,8 +162,8 @@ export async function showDatabaseProperties(
     const threads = (threadsResult[0]?.threads as string | undefined) ?? 'Unknown';
 
     const config = connectionManager.currentConfig;
-    const type = config?.type === 'memory' ? 'In-Memory' : 'File';
-    const path = config?.path ?? 'N/A';
+    const type = connectionManager.getTypeDisplay();
+    const path = config?.type === 'file' ? config.path : 'N/A';
 
     const message = `
 **${database.name}**

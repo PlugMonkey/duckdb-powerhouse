@@ -6,13 +6,63 @@
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 /** Connection type */
-export type ConnectionType = 'memory' | 'file';
+export type ConnectionType = 'memory' | 'file' | 'motherduck' | 'postgres' | 's3';
 
-/** Database connection configuration */
-export interface ConnectionConfig {
-  type: ConnectionType;
-  path?: string; // Only for file-based connections
+/** Base connection configuration */
+interface BaseConnectionConfig {
   name: string;
+}
+
+/** In-memory database connection */
+export interface MemoryConnectionConfig extends BaseConnectionConfig {
+  type: 'memory';
+}
+
+/** File-based database connection */
+export interface FileConnectionConfig extends BaseConnectionConfig {
+  type: 'file';
+  path: string;
+}
+
+/** MotherDuck cloud connection */
+export interface MotherDuckConnectionConfig extends BaseConnectionConfig {
+  type: 'motherduck';
+  database?: string; // Optional, empty = attach all
+}
+
+/** PostgreSQL external connection */
+export interface PostgresConnectionConfig extends BaseConnectionConfig {
+  type: 'postgres';
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  // password stored in SecretStorage
+}
+
+/** S3/cloud storage connection */
+export interface S3ConnectionConfig extends BaseConnectionConfig {
+  type: 's3';
+  region: string;
+  bucket?: string;
+  useIamAuth: boolean;
+  // credentials stored in SecretStorage if !useIamAuth
+}
+
+/** Discriminated union of all connection configurations */
+export type ConnectionConfig =
+  | MemoryConnectionConfig
+  | FileConnectionConfig
+  | MotherDuckConnectionConfig
+  | PostgresConnectionConfig
+  | S3ConnectionConfig;
+
+/** Helper to get path from connection config (for backward compatibility) */
+export function getConnectionPath(config: ConnectionConfig): string | undefined {
+  if (config.type === 'file') {
+    return config.path;
+  }
+  return undefined;
 }
 
 /** Column metadata */

@@ -19,6 +19,11 @@ export const COMMANDS = {
   CREATE_CONNECTION: `${EXTENSION_ID}.createConnection`,
   DISCONNECT: `${EXTENSION_ID}.disconnect`,
   RECONNECT: `${EXTENSION_ID}.reconnect`,
+  // Remote connection commands
+  CONNECT_MOTHERDUCK: `${EXTENSION_ID}.connectMotherDuck`,
+  CONNECT_POSTGRES: `${EXTENSION_ID}.connectPostgres`,
+  CONNECT_S3: `${EXTENSION_ID}.connectS3`,
+  MANAGE_CREDENTIALS: `${EXTENSION_ID}.manageCredentials`,
   // Query execution commands
   RUN_QUERY: `${EXTENSION_ID}.runQuery`,
   RUN_SELECTED_QUERY: `${EXTENSION_ID}.runSelectedQuery`,
@@ -83,6 +88,9 @@ export const CONFIG_KEYS = {
   SHOW_ROW_NUMBERS: 'showRowNumbers',
   CONFIRM_LARGE_RESULTS: 'confirmLargeResults',
   QUERY_TIMEOUT: 'queryTimeout',
+  // Remote connection settings
+  S3_DEFAULT_REGION: 's3.defaultRegion',
+  POSTGRES_DEFAULT_PORT: 'postgres.defaultPort',
 } as const;
 
 /** Default values */
@@ -90,6 +98,9 @@ export const DEFAULTS = {
   MAX_RESULT_ROWS: 10000,
   DEFAULT_RESULT_LIMIT: 100,
   PREVIEW_LIMIT: 100,
+  // Remote connection defaults
+  S3_DEFAULT_REGION: 'us-east-1',
+  POSTGRES_DEFAULT_PORT: 5432,
 } as const;
 
 /** Supported file extensions for direct querying */

@@ -49,9 +49,9 @@ describe('ConnectionManager', () => {
       expect(manager.currentConfig?.type).toBe('memory');
     });
 
-    it('should not have a path for in-memory connection', async () => {
+    it('should have memory type for in-memory connection', async () => {
       await manager.connectInMemory();
-      expect(manager.currentConfig?.path).toBeUndefined();
+      expect(manager.currentConfig?.type).toBe('memory');
     });
   });
 
@@ -82,7 +82,11 @@ describe('ConnectionManager', () => {
 
     it('should store the file path', async () => {
       await manager.connectToFile(testDbPath);
-      expect(manager.currentConfig?.path).toBe(testDbPath);
+      const config = manager.currentConfig;
+      expect(config?.type).toBe('file');
+      if (config?.type === 'file') {
+        expect(config.path).toBe(testDbPath);
+      }
     });
 
     it('should derive name from path when not provided', async () => {

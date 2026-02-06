@@ -7,6 +7,10 @@ import {
   showConnectionMenu,
   disconnect,
   reconnect,
+  createMotherDuckConnection,
+  createPostgresConnection,
+  createS3Connection,
+  showCredentialsMenu,
 } from './connection';
 import {
   ExplorerProvider,
@@ -87,8 +91,9 @@ export function activate(context: vscode.ExtensionContext): void {
   const statusBar = new ConnectionStatusBar(connectionManager);
   context.subscriptions.push(statusBar);
 
-  // Create results panel
+  // Create results panel and initialize with context for history persistence
   const resultsPanel = ResultsPanel.getInstance(context.extensionUri);
+  resultsPanel.initialize(context);
 
   // Subscribe to query results and show in panel
   context.subscriptions.push(
@@ -165,6 +170,23 @@ export function activate(context: vscode.ExtensionContext): void {
 
     vscode.commands.registerCommand(COMMANDS.RECONNECT, () => {
       void reconnect(connectionManager);
+    }),
+
+    // Remote connection commands
+    vscode.commands.registerCommand(COMMANDS.CONNECT_MOTHERDUCK, () => {
+      void createMotherDuckConnection(connectionManager);
+    }),
+
+    vscode.commands.registerCommand(COMMANDS.CONNECT_POSTGRES, () => {
+      void createPostgresConnection(connectionManager);
+    }),
+
+    vscode.commands.registerCommand(COMMANDS.CONNECT_S3, () => {
+      void createS3Connection(connectionManager);
+    }),
+
+    vscode.commands.registerCommand(COMMANDS.MANAGE_CREDENTIALS, () => {
+      void showCredentialsMenu(connectionManager);
     }),
 
     vscode.commands.registerCommand(COMMANDS.REFRESH_EXPLORER, () => {

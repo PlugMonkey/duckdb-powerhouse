@@ -1,8 +1,17 @@
 import * as vscode from 'vscode';
 import { Database, Connection, RowData, TableData } from 'duckdb-async';
 
-import { ConnectionConfig, ConnectionState } from '../types';
+import {
+  ConnectionConfig,
+  ConnectionState,
+  ConnectionType,
+  MotherDuckConnectionConfig,
+  PostgresConnectionConfig,
+  S3ConnectionConfig,
+} from '../types';
 import { Logger } from '../utils/logger';
+import { ExtensionLoader } from './extension-loader';
+import { CredentialManager, getCredentialManager } from './credentials';
 
 /** Storage key for connection history */
 const CONNECTION_HISTORY_KEY = 'connectionHistory';
@@ -21,15 +30,30 @@ export class ConnectionManager {
   private _state: ConnectionState = 'disconnected';
   private _lastConfig: ConnectionConfig | null = null;
   private globalState: vscode.Memento | null = null;
+  private extensionLoader = new ExtensionLoader();
+  private credentialManager: CredentialManager | null = null;
 
   private readonly stateChangeListeners: Set<(state: ConnectionState) => void> = new Set();
 
   /**
    * Initialize the connection manager with VS Code extension context.
-   * This enables connection history persistence.
+   * This enables connection history persistence and credential storage.
    */
   initialize(context: vscode.ExtensionContext): void {
     this.globalState = context.globalState;
+    this.credentialManager = getCredentialManager();
+    this.credentialManager.initialize(context);
+  }
+
+  /**
+   * Get the credential manager instance.
+   * @throws Error if not initialized
+   */
+  getCredentialManager(): CredentialManager {
+    if (!this.credentialManager) {
+      throw new Error('ConnectionManager not initialized. Call initialize() first.');
+    }
+    return this.credentialManager;
   }
 
   /**
@@ -137,14 +161,26 @@ export class ConnectionManager {
     Logger.info('Connecting to database', { type: config.type, name: config.name });
 
     try {
-      // Create database instance
-      const dbPath = config.type === 'memory' ? ':memory:' : config.path;
-      if (!dbPath) {
-        throw new Error('Database path is required for file-based connections');
+      switch (config.type) {
+        case 'memory':
+          await this.connectMemoryInternal();
+          break;
+        case 'file':
+          await this.connectFileInternal(config.path);
+          break;
+        case 'motherduck':
+          await this.connectMotherDuckInternal(config);
+          break;
+        case 'postgres':
+          await this.connectPostgresInternal(config);
+          break;
+        case 's3':
+          await this.connectS3Internal(config);
+          break;
+        default:
+          throw new Error(`Unknown connection type: ${(config as ConnectionConfig).type}`);
       }
 
-      this.database = await Database.create(dbPath);
-      this.connection = await this.database.connect();
       this.config = config;
       this._lastConfig = config;
 
@@ -160,9 +196,101 @@ export class ConnectionManager {
       this.config = null;
 
       const message = err instanceof Error ? err.message : String(err);
-      Logger.error('Connection failed', { config, error: message });
+      Logger.error('Connection failed', { type: config.type, error: message });
       throw new Error(`Failed to connect: ${message}`);
     }
+  }
+
+  /**
+   * Connect to an in-memory database
+   */
+  private async connectMemoryInternal(): Promise<void> {
+    this.database = await Database.create(':memory:');
+    this.connection = await this.database.connect();
+  }
+
+  /**
+   * Connect to a file-based database
+   */
+  private async connectFileInternal(path: string): Promise<void> {
+    if (!path) {
+      throw new Error('Database path is required for file-based connections');
+    }
+    this.database = await Database.create(path);
+    this.connection = await this.database.connect();
+  }
+
+  /**
+   * Connect to MotherDuck cloud data warehouse
+   */
+  private async connectMotherDuckInternal(config: MotherDuckConnectionConfig): Promise<void> {
+    const creds = this.getCredentialManager();
+    const token = await creds.getMotherDuckToken();
+
+    if (!token) {
+      throw new Error('MotherDuck token not configured. Please set up your token first.');
+    }
+
+    this.database = await Database.create(':memory:');
+    this.connection = await this.database.connect();
+
+    await this.extensionLoader.loadMotherDuck(this.connection);
+    await this.connection.run(`SET motherduck_token='${this.escapeValue(token)}'`);
+
+    const dbName = config.database ? this.escapeValue(config.database) : '';
+    await this.connection.run(`ATTACH 'md:${dbName}'`);
+  }
+
+  /**
+   * Connect to a PostgreSQL database
+   */
+  private async connectPostgresInternal(config: PostgresConnectionConfig): Promise<void> {
+    const creds = this.getCredentialManager();
+    const password = await creds.getPostgresPassword(config.name);
+
+    if (!password) {
+      throw new Error('PostgreSQL password not configured. Please set up credentials first.');
+    }
+
+    this.database = await Database.create(':memory:');
+    this.connection = await this.database.connect();
+
+    await this.extensionLoader.loadPostgres(this.connection);
+
+    // Build connection string with proper escaping
+    const connStr = `postgresql://${encodeURIComponent(config.user)}:${encodeURIComponent(password)}@${config.host}:${config.port}/${config.database}`;
+    await this.connection.run(`ATTACH '${this.escapeValue(connStr)}' AS pg (TYPE postgres)`);
+  }
+
+  /**
+   * Connect to S3/cloud storage
+   */
+  private async connectS3Internal(config: S3ConnectionConfig): Promise<void> {
+    this.database = await Database.create(':memory:');
+    this.connection = await this.database.connect();
+
+    await this.extensionLoader.loadS3(this.connection, config.useIamAuth);
+
+    await this.connection.run(`SET s3_region='${this.escapeValue(config.region)}'`);
+
+    if (!config.useIamAuth) {
+      const creds = this.getCredentialManager();
+      const s3Creds = await creds.getS3Credentials();
+
+      if (!s3Creds) {
+        throw new Error('S3 credentials not configured. Please set up your access keys first.');
+      }
+
+      await this.connection.run(`SET s3_access_key_id='${this.escapeValue(s3Creds.accessKey)}'`);
+      await this.connection.run(`SET s3_secret_access_key='${this.escapeValue(s3Creds.secretKey)}'`);
+    }
+  }
+
+  /**
+   * Escape a value for use in SQL SET statements
+   */
+  private escapeValue(value: string): string {
+    return value.replace(/'/g, "''");
   }
 
   /**
@@ -184,6 +312,7 @@ export class ConnectionManager {
       this.database = null;
       this.connection = null;
       this.config = null;
+      this.extensionLoader.reset();
       this.setState('disconnected');
     }
   }
@@ -230,7 +359,14 @@ export class ConnectionManager {
    */
   getTypeDisplay(): string {
     if (!this.config) return 'Not connected';
-    return this.config.type === 'memory' ? 'In-Memory' : 'File';
+    const labels: Record<ConnectionType, string> = {
+      memory: 'In-Memory',
+      file: 'File',
+      motherduck: 'MotherDuck',
+      postgres: 'PostgreSQL',
+      s3: 'S3',
+    };
+    return labels[this.config.type];
   }
 
   /**
@@ -264,10 +400,8 @@ export class ConnectionManager {
 
     const history = this.getHistory();
 
-    // Remove duplicate entries (same type and path)
-    const filtered = history.filter(
-      (h) => !(h.type === config.type && h.path === config.path && h.name === config.name)
-    );
+    // Remove duplicate entries (same type and identifying properties)
+    const filtered = history.filter((h) => !this.isSameConnection(h, config));
 
     // Add new entry at the beginning
     filtered.unshift(config);
@@ -277,6 +411,34 @@ export class ConnectionManager {
 
     await this.globalState.update(CONNECTION_HISTORY_KEY, trimmed);
     Logger.debug('Connection history updated', { count: trimmed.length });
+  }
+
+  /**
+   * Check if two connections are the same based on type-specific properties.
+   */
+  private isSameConnection(a: ConnectionConfig, b: ConnectionConfig): boolean {
+    if (a.type !== b.type || a.name !== b.name) {
+      return false;
+    }
+
+    switch (a.type) {
+      case 'memory':
+        return true;
+      case 'file':
+        return a.path === (b as typeof a).path;
+      case 'motherduck':
+        return a.database === (b as typeof a).database;
+      case 'postgres': {
+        const bPostgres = b as typeof a;
+        return a.host === bPostgres.host && a.port === bPostgres.port && a.database === bPostgres.database;
+      }
+      case 's3': {
+        const bS3 = b as typeof a;
+        return a.region === bS3.region && a.bucket === bS3.bucket;
+      }
+      default:
+        return false;
+    }
   }
 
   /**

@@ -32,3 +32,8 @@ coverage/
 
 # Bun
 bun.lockb
+
+# Internal development docs
+CLAUDE.md
+docs/
+tasks/

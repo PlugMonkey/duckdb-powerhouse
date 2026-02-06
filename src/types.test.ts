@@ -24,8 +24,8 @@ describe('Types', () => {
 
   describe('ConnectionType', () => {
     it('should accept valid types', () => {
-      const types: ConnectionType[] = ['memory', 'file'];
-      expect(types).toHaveLength(2);
+      const types: ConnectionType[] = ['memory', 'file', 'motherduck', 'postgres', 's3'];
+      expect(types).toHaveLength(5);
     });
   });
 
@@ -36,7 +36,6 @@ describe('Types', () => {
         name: 'Test DB',
       };
       expect(config.type).toBe('memory');
-      expect(config.path).toBeUndefined();
     });
 
     it('should allow file config with path', () => {
@@ -47,6 +46,41 @@ describe('Types', () => {
       };
       expect(config.type).toBe('file');
       expect(config.path).toBe('/path/to/db.duckdb');
+    });
+
+    it('should allow motherduck config', () => {
+      const config: ConnectionConfig = {
+        type: 'motherduck',
+        name: 'My MotherDuck',
+        database: 'analytics',
+      };
+      expect(config.type).toBe('motherduck');
+      expect(config.database).toBe('analytics');
+    });
+
+    it('should allow postgres config', () => {
+      const config: ConnectionConfig = {
+        type: 'postgres',
+        name: 'My Postgres',
+        host: 'localhost',
+        port: 5432,
+        database: 'mydb',
+        user: 'admin',
+      };
+      expect(config.type).toBe('postgres');
+      expect(config.host).toBe('localhost');
+    });
+
+    it('should allow s3 config', () => {
+      const config: ConnectionConfig = {
+        type: 's3',
+        name: 'My S3',
+        region: 'us-east-1',
+        bucket: 'my-bucket',
+        useIamAuth: true,
+      };
+      expect(config.type).toBe('s3');
+      expect(config.region).toBe('us-east-1');
     });
   });
 

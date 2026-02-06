@@ -88,7 +88,8 @@ export class ExplorerProvider implements vscode.TreeDataProvider<BaseNode> {
       return [new MessageNode('No database', 'Connection configuration missing')];
     }
 
-    return [new DatabaseNode(config.name, config.path)];
+    const path = config.type === 'file' ? config.path : undefined;
+    return [new DatabaseNode(config.name, path)];
   }
 
   /**

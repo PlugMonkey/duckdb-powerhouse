@@ -33,7 +33,7 @@ function escapeHtml(text: string): string {
  * Safely stringify a value, handling BigInt and other non-JSON-serializable types.
  */
 function safeStringify(value: unknown): string {
-  return JSON.stringify(value, (_key, val) => {
+  return JSON.stringify(value, (_key, val: unknown) => {
     if (typeof val === 'bigint') {
       return val.toString();
     }
@@ -122,11 +122,11 @@ export function getWebviewContent(
         <span class="stat">${result.executionTimeMs.toFixed(0)}ms</span>
         ${result.truncated ? '<span class="stat warning">Results truncated</span>' : ''}
         <span class="stat-spacer"></span>
-        <button class="btn" onclick="insertRow()" title="Generate INSERT statement">➕ Insert</button>
-        <button class="btn" onclick="copyAll()" title="Copy all to clipboard">📋 Copy All</button>
-        <button class="btn" onclick="exportCsv()" title="Export to CSV">📄 CSV</button>
-        <button class="btn" onclick="exportTsv()" title="Export to TSV">📋 TSV</button>
-        <button class="btn" onclick="exportJson()" title="Export to JSON">📦 JSON</button>
+        <button class="btn" id="btn-insert" title="Generate INSERT statement">➕ Insert</button>
+        <button class="btn" id="btn-copy-all" title="Copy all to clipboard">📋 Copy All</button>
+        <button class="btn" id="btn-export-csv" title="Export to CSV">📄 CSV</button>
+        <button class="btn" id="btn-export-tsv" title="Export to TSV">📋 TSV</button>
+        <button class="btn" id="btn-export-json" title="Export to JSON">📦 JSON</button>
       </div>
     `;
 
@@ -135,7 +135,7 @@ export function getWebviewContent(
       <div class="query-editor">
         <div class="query-editor-header">
           <span class="query-label">SQL Query</span>
-          <button class="btn btn-run" onclick="runQuery()" title="Run query (Ctrl+Enter)">▶ Run</button>
+          <button class="btn btn-run" id="btn-run-query" title="Run query (Ctrl+Enter)">▶ Run</button>
         </div>
         <textarea id="sql-editor" class="sql-textarea" spellcheck="false">${escapeHtml(result.sql)}</textarea>
       </div>
@@ -150,7 +150,7 @@ export function getWebviewContent(
       const firstCell = result.rows.find(row => row[i]?.type !== 'null')?.[i];
       const typeHint = firstCell ? firstCell.type : 'unknown';
       return `
-        <th data-col="${i}" onclick="sortColumn(${i})" title="${escapeHtml(col.name)} (${typeHint}) - Click to sort">
+        <th data-col="${i}" class="sortable-header" title="${escapeHtml(col.name)} (${typeHint}) - Click to sort">
           <span class="col-name">${escapeHtml(col.name)}</span>
           <span class="col-type">${typeHint}</span>
           <span class="sort-indicator"></span>
@@ -166,7 +166,7 @@ export function getWebviewContent(
       return `
         <th class="filter-cell">
           <div class="filter-wrapper">
-            <select class="filter-op" data-col="${i}" onchange="applyFilters()" title="Filter operator">
+            <select class="filter-op" data-col="${i}" title="Filter operator">
               <option value="">-</option>
               <option value="=" ${!isNumeric ? 'selected' : ''}>=</option>
               <option value="!=">\u2260</option>
@@ -182,7 +182,6 @@ export function getWebviewContent(
             </select>
             <input type="text" class="filter-input" data-col="${i}"
                    placeholder="Filter..."
-                   onkeyup="applyFilters()"
                    title="Type to filter ${escapeHtml(col.name)}">
           </div>
         </th>
@@ -194,12 +193,10 @@ export function getWebviewContent(
         ? `<td class="row-num">${rowIndex + 1}</td>`
         : '';
       const cellsHtml = row.map((cell, colIndex) => `
-        <td class="cell-${cell.type}"
+        <td class="cell-${cell.type} data-cell"
             data-row="${rowIndex}"
             data-col="${colIndex}"
-            data-raw="${escapeHtml(safeStringify(cell.raw))}"
-            onclick="selectCell(this)"
-            ondblclick="copyCell(this)">
+            data-raw="${escapeHtml(safeStringify(cell.raw))}">
           ${escapeHtml(cell.display)}
         </td>
       `).join('');
@@ -209,11 +206,11 @@ export function getWebviewContent(
     // Pagination controls
     const paginationHtml = needsPagination ? `
       <div class="pagination">
-        <button class="btn" onclick="goToPage(0)" disabled id="btn-first">⏮ First</button>
-        <button class="btn" onclick="goToPage(currentPage - 1)" disabled id="btn-prev">◀ Prev</button>
+        <button class="btn" disabled id="btn-first" data-page="0">⏮ First</button>
+        <button class="btn" disabled id="btn-prev" data-page="prev">◀ Prev</button>
         <span class="page-info">Page <span id="current-page">1</span> of ${totalPages}</span>
-        <button class="btn" onclick="goToPage(currentPage + 1)" id="btn-next">Next ▶</button>
-        <button class="btn" onclick="goToPage(${totalPages - 1})" id="btn-last">Last ⏭</button>
+        <button class="btn" id="btn-next" data-page="next">Next ▶</button>
+        <button class="btn" id="btn-last" data-page="${totalPages - 1}">Last ⏭</button>
       </div>
     ` : '';
 
@@ -261,12 +258,14 @@ function buildToolbarHtml(historyItems: HistoryItem[], currentId: string): strin
     <div class="toolbar">
       <div class="toolbar-left">
         <label for="history-select">History:</label>
-        <select id="history-select" onchange="switchResult(this.value)">
+        <select id="history-select">
           ${historyOptions}
         </select>
+        <span class="history-count">(${historyItems.length})</span>
       </div>
       <div class="toolbar-right">
-        <button class="btn btn-clear" onclick="clearResults()" title="Clear all results">Clear</button>
+        <button class="btn" id="btn-copy-sql" title="Copy SQL to clipboard">📝 Copy SQL</button>
+        <button class="btn btn-clear" id="btn-clear" title="Clear all results">🗑️ Clear</button>
       </div>
     </div>
   `;
@@ -576,6 +575,12 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
       opacity: 0.8;
     }
 
+    .history-count {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-left: 4px;
+    }
+
     .toolbar select {
       background: var(--vscode-dropdown-background);
       color: var(--vscode-dropdown-foreground);
@@ -755,7 +760,11 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
   ${bodyContent}
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
-    let sortColumn = -1;
+
+    // Send ready message to confirm script is running
+    vscode.postMessage({ command: 'ready' });
+
+    let sortedColumnIndex = -1;
     let sortDirection = 'none';
     let selectedCell = null;
 
@@ -804,6 +813,10 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
 
     function clearResults() {
       vscode.postMessage({ command: 'clearResults' });
+    }
+
+    function copySql() {
+      vscode.postMessage({ command: 'copySql' });
     }
 
     function runQuery() {
@@ -977,17 +990,17 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
       goToPage(0);
     }
 
-    function sortColumn(colIndex) {
+    function sortByColumn(colIndex) {
       const table = document.getElementById('results-table');
       const headers = table.querySelectorAll('th');
       const tbody = table.querySelector('tbody');
       const rows = Array.from(tbody.querySelectorAll('tr'));
 
       // Update sort direction
-      if (sortColumn === colIndex) {
+      if (sortedColumnIndex === colIndex) {
         sortDirection = sortDirection === 'asc' ? 'desc' : sortDirection === 'desc' ? 'none' : 'asc';
       } else {
-        sortColumn = colIndex;
+        sortedColumnIndex = colIndex;
         sortDirection = 'asc';
       }
 
@@ -1076,6 +1089,56 @@ function buildHtml(nonce: string, bodyContent: string, _totalResults: number): s
         newCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         e.preventDefault();
       }
+    });
+
+    // ========== EVENT LISTENERS ==========
+    // Wire up buttons to their handlers (CSP blocks inline onclick)
+
+    // Stats bar buttons
+    document.getElementById('btn-insert')?.addEventListener('click', insertRow);
+    document.getElementById('btn-copy-all')?.addEventListener('click', copyAll);
+    document.getElementById('btn-export-csv')?.addEventListener('click', exportCsv);
+    document.getElementById('btn-export-tsv')?.addEventListener('click', exportTsv);
+    document.getElementById('btn-export-json')?.addEventListener('click', exportJson);
+
+    // Run query button
+    document.getElementById('btn-run-query')?.addEventListener('click', runQuery);
+
+    // Toolbar buttons
+    document.getElementById('history-select')?.addEventListener('change', function() {
+      switchResult(this.value);
+    });
+    document.getElementById('btn-copy-sql')?.addEventListener('click', copySql);
+    document.getElementById('btn-clear')?.addEventListener('click', clearResults);
+
+    // Pagination buttons
+    document.getElementById('btn-first')?.addEventListener('click', () => goToPage(0));
+    document.getElementById('btn-prev')?.addEventListener('click', () => goToPage(currentPage - 1));
+    document.getElementById('btn-next')?.addEventListener('click', () => goToPage(currentPage + 1));
+    document.getElementById('btn-last')?.addEventListener('click', () => goToPage(totalPages - 1));
+
+    // Sortable column headers
+    document.querySelectorAll('.sortable-header').forEach((header) => {
+      header.addEventListener('click', () => {
+        const colIndex = parseInt(header.dataset.col, 10);
+        if (!isNaN(colIndex)) {
+          sortByColumn(colIndex);
+        }
+      });
+    });
+
+    // Filter inputs - apply filters on input change
+    document.querySelectorAll('.filter-input').forEach((input) => {
+      input.addEventListener('input', applyFilters);
+    });
+    document.querySelectorAll('.filter-op').forEach((select) => {
+      select.addEventListener('change', applyFilters);
+    });
+
+    // Data cells - click to select, double-click to copy
+    document.querySelectorAll('.data-cell').forEach((cell) => {
+      cell.addEventListener('click', () => selectCell(cell));
+      cell.addEventListener('dblclick', () => copyCell(cell));
     });
   </script>
 </body>

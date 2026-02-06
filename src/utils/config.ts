@@ -66,6 +66,20 @@ export const config = {
   get queryTimeout(): number {
     return getConfig(CONFIG_KEYS.QUERY_TIMEOUT, 0);
   },
+
+  /**
+   * Default AWS region for S3 connections.
+   */
+  get s3DefaultRegion(): string {
+    return getConfig(CONFIG_KEYS.S3_DEFAULT_REGION, DEFAULTS.S3_DEFAULT_REGION);
+  },
+
+  /**
+   * Default PostgreSQL port.
+   */
+  get postgresDefaultPort(): number {
+    return getConfig(CONFIG_KEYS.POSTGRES_DEFAULT_PORT, DEFAULTS.POSTGRES_DEFAULT_PORT);
+  },
 };
 
 /**
