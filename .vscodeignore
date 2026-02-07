@@ -1,7 +1,7 @@
 # Source files (bundled into out/)
 src/**
 **/*.ts
-!out/**
+out/test/**
 
 # Development files
 .vscode/**
@@ -16,6 +16,8 @@ src/**
 tsconfig.json
 esbuild.js
 vitest.config.ts
+bunfig.toml
+.vscode-test.mjs
 .eslintrc*
 .eslintignore
 .prettierrc*
@@ -29,7 +31,7 @@ package-lock.json
 
 # Test files
 **/*.test.ts
-**/test/**
+**/*.e2e.ts
 **/__tests__/**
 
 # Internal development docs

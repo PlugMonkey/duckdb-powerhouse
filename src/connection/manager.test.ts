@@ -115,13 +115,13 @@ describe('ConnectionManager', () => {
     });
 
     it('should be safe to call disconnect when not connected', async () => {
-      await expect(manager.disconnect()).resolves.not.toThrow();
+      await manager.disconnect();
     });
 
     it('should be safe to call disconnect multiple times', async () => {
       await manager.connectInMemory();
       await manager.disconnect();
-      await expect(manager.disconnect()).resolves.not.toThrow();
+      await manager.disconnect();
     });
   });
 
@@ -260,7 +260,7 @@ describe('ConnectionManager', () => {
       });
 
       // Should not throw despite listener error
-      await expect(manager.connectInMemory()).resolves.not.toThrow();
+      await manager.connectInMemory();
     });
   });
 
