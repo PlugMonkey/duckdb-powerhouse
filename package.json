@@ -2,7 +2,7 @@
   "name": "duckdb-powerhouse",
   "displayName": "DuckDB Powerhouse by PlugMonkey",
   "description": "Fast in-memory analytics with DuckDB inside VS Code",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "publisher": "PlugMonkey",
   "license": "MIT",
   "icon": "resources/icon.png",
@@ -617,12 +617,12 @@
     "viewsWelcome": [
       {
         "view": "duckdbExplorer",
-        "contents": "Welcome to DuckDB Powerhouse!\n\n[$(database) Create Connection](command:duckdb-powerhouse.createConnection)\n[$(folder-opened) Import Data](command:duckdb-powerhouse.importData)\n[$(add) Create Table](command:duckdb-powerhouse.createTableWizard)\n\n**Tip:** Query files directly without importing:\n`SELECT * FROM 'data.csv'`\n\n[$(book) Getting Started Guide](command:duckdb-powerhouse.openWalkthrough)",
+        "contents": "Welcome to DuckDB Powerhouse!\n\n[$(database) Create Connection](command:duckdb-powerhouse.createConnection)\n[$(folder-opened) Import Data](command:duckdb-powerhouse.importData)\n[$(add) Create Table](command:duckdb-powerhouse.createTableWizard)\n\n[$(book) Getting Started Guide](command:duckdb-powerhouse.openWalkthrough)",
         "when": "!duckdb-powerhouse.connected"
       },
       {
         "view": "duckdbExplorer",
-        "contents": "Database is empty. Get started:\n\n[$(folder-opened) Import Data](command:duckdb-powerhouse.importData)\n[$(add) Create Table](command:duckdb-powerhouse.createTableWizard)\n[$(globe) Import from URL](command:duckdb-powerhouse.importDataFromUrl)\n\nOr query files directly without importing:\n`SELECT * FROM 'file.csv'`",
+        "contents": "Database is empty. Get started:\n\n[$(folder-opened) Import Data](command:duckdb-powerhouse.importData)\n[$(add) Create Table](command:duckdb-powerhouse.createTableWizard)\n[$(globe) Import from URL](command:duckdb-powerhouse.importDataFromUrl)",
         "when": "duckdb-powerhouse.connected && duckdb-powerhouse.emptyDatabase"
       }
     ],
